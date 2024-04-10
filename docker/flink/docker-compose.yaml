@@ -1,0 +1,92 @@
+version: "3.7"
+
+services:
+  kafka:
+    command:
+      - redpanda
+      - start
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://kafka:9092,external://localhost:19092
+      - --pandaproxy-addr internal://0.0.0.0:8082,external://0.0.0.0:18082
+      - --advertise-pandaproxy-addr internal://kafka:8082,external://localhost:18082
+      - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18081
+      - --rpc-addr kafka:33145
+      - --advertise-rpc-addr kafka:33145
+      - --smp 1
+      - --memory 1G
+      - --mode dev-container
+      - --default-log-level=debug
+    image: docker.redpanda.com/redpandadata/redpanda:v23.1.3
+    container_name: kafka
+    ports:
+      - 18081:18081
+      - 18082:18082
+      - 19092:19092
+      - 19644:9644
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -E 'Healthy:.+true' || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+  
+  generator:
+    command:
+      - --max-events=1000000 
+      - --num-event-generators=3
+    image: ghcr.io/risingwavelabs/nexmark-bench:test-7
+    container_name: generator
+    environment:
+      KAFKA_HOST: kafka:9092
+      AUCTION_TOPIC: nexmark-auction
+      BID_TOPIC: nexmark-bid
+      PERSON_TOPIC: nexmark-person
+      NUM_PARTITIONS: 1
+      SEPARATE_TOPICS: false
+    depends_on:
+      kafka:
+        condition: service_healthy
+  
+  flink-jobmanager:
+    image: flink:1.16.0-scala_2.12-java11
+    ports:
+      - "8081:8081"
+    command: jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: flink-jobmanager 
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: '2G'       
+
+  flink-taskmanager:
+    image: flink:1.16.0-scala_2.12-java11
+    depends_on:
+      - flink-jobmanager
+    command: taskmanager
+    scale: 1
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: flink-jobmanager
+        taskmanager.numberOfTaskSlots: 1
+        taskmanager.memory.flink.size: 3g
+        taskmanager.memory.process.size: 4g
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: '4G'       
+
+  flink-sql:
+    image: timeplus/flinksql:456bb6f  
+    pull_policy: always
+    ports:
+      - "8080:8080"
+
+
+
+  
