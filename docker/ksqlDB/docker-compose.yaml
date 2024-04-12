@@ -47,14 +47,26 @@ services:
       kafka:
         condition: service_healthy    
 
-  timeplus:
-    image: timeplus/timeplus-aio:latest
-    pull_policy: always
+  ksqldb-server:
+    image: confluentinc/ksqldb-server:0.24.0
+    container_name: ksqldb-server
     ports:
-      - "8000:8000"
+      - "8088:8088"
+    environment:
+      - KSQL_BOOTSTRAP_SERVERS=kafka:9092
+      - KSQL_LISTENERS=http://0.0.0.0:8088/
+      - KSQL_KSQL_SERVICE_ID=ksql_service_
     depends_on:
-      kafka:
-        condition: service_healthy 
+      - kafka
+
+  ksqldb-cli:
+    image: confluentinc/ksqldb-cli:0.24.0
+    container_name: ksqldb-cli
+    depends_on:
+      - kafka
+      - ksqldb-server
+    entrypoint: /bin/sh
+    tty: true
 
 
 

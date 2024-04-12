@@ -85,6 +85,7 @@ CREATE VIEW bid AS
 
 
 -- q0
+-- Pass Through	Measures the monitoring overhead including the source generator.
 CREATE TABLE nexmark_q0 (
   auction  BIGINT,
   bidder  BIGINT,
@@ -99,6 +100,7 @@ INSERT INTO nexmark_q0
   SELECT auction, bidder, price, dateTime, extra FROM bid;
 
 -- q1
+-- Currency Conversion	Convert each bid value from dollars to euros.
 CREATE TABLE nexmark_q1 (
   auction  BIGINT,
   bidder  BIGINT,
@@ -119,6 +121,7 @@ INSERT INTO nexmark_q1
   FROM bid;
 
 -- q2
+-- Selection	Find bids with specific auction ids and show their bid price.
 CREATE TABLE nexmark_q2 (
   auction  BIGINT,
   price  BIGINT
@@ -130,6 +133,7 @@ INSERT INTO nexmark_q2
   SELECT auction, price FROM bid WHERE MOD(auction, 123) = 0;
 
 -- q3 
+-- Local Item Suggestion	Who is selling in OR, ID or CA in category 10, and for what auction ids?
 CREATE TABLE nexmark_q3 (
   name  VARCHAR,
   city  VARCHAR,
@@ -148,6 +152,7 @@ INSERT INTO nexmark_q3
       A.category = 10 and (P.state = 'OR' OR P.state = 'ID' OR P.state = 'CA');
 
 -- q4
+-- Average Price for a Category	Select the average of the wining bid prices for all auctions in each category.
 CREATE TABLE nexmark_q4 (
   id BIGINT,
   final BIGINT
@@ -168,6 +173,7 @@ INSERT INTO nexmark_q4
   GROUP BY Q.category;
 
 -- q5
+-- Hot Items	Which auctions have seen the most bids in the last period?
 CREATE TABLE nexmark_q5 (
   auction  BIGINT,
   num  BIGINT
@@ -210,6 +216,7 @@ INSERT INTO nexmark_q5
       AuctionBids.num >= MaxBids.maxn;
 
 -- q7
+-- Highest Bid	Select the bids with the highest bid price in the last period.
 CREATE TABLE nexmark_q7 (
   auction  BIGINT,
   bidder  BIGINT,
@@ -232,6 +239,7 @@ INSERT INTO nexmark_q7
   WHERE B.dateTime BETWEEN B1.dateTime  - INTERVAL '10' SECOND AND B1.dateTime;
 
 -- q8
+-- Monitor New Users	Select people who have entered the system and created auctions in the last period.
 CREATE TABLE nexmark_q8 (
     id  BIGINT,
     name  VARCHAR,
@@ -260,6 +268,7 @@ INSERT INTO nexmark_q8
 
 
 -- q9
+-- Winning Bids	Find the winning bid for each auction.
 CREATE TABLE nexmark_q9 (
     id  BIGINT,
     itemName  VARCHAR,
@@ -293,6 +302,7 @@ INSERT INTO nexmark_q9
   WHERE rownum <= 1;
 
 -- q10
+-- Log to File System	Log all events to file system. Illustrates windows streaming data into partitioned file system.
 CREATE TABLE nexmark_q10 (
   auction  BIGINT,
   bidder  BIGINT,
@@ -310,6 +320,7 @@ INSERT INTO nexmark_q10
     FROM bid;
 
 -- q11
+-- User Sessions	How many bids did a user make in each session they were active? Illustrates session windows.
 CREATE TABLE nexmark_q11 (
     bidder BIGINT,
     bid_count BIGINT,
@@ -329,6 +340,7 @@ INSERT INTO nexmark_q11
   GROUP BY B.bidder, SESSION(B.dateTime, INTERVAL '10' SECOND);
 
 -- q12
+-- Processing Time Windows	How many bids does a user make within a fixed processing time limit? Illustrates working in processing time window.
 CREATE TABLE nexmark_q12 (
   bidder BIGINT,
   bid_count BIGINT,
@@ -349,6 +361,7 @@ INSERT INTO nexmark_q12
 
 -- q13 
 -- joining local file of csv
+-- Bounded Side Input Join	Joins a stream to a bounded side input, modeling basic stream enrichment.
 CREATE TABLE side_input (
   key BIGINT,
   `value` VARCHAR
@@ -381,6 +394,7 @@ INSERT INTO nexmark_q13
 
 -- q14 
 -- udf
+-- Calculation	Convert bid timestamp into types and find bids with specific price. Illustrates more complex projection and filter.
 CREATE FUNCTION count_char AS 'com.github.nexmark.flink.udf.CountChar';
 
 CREATE TABLE nexmark_q14 (
@@ -412,6 +426,8 @@ INSERT INTO nexmark_q14
   WHERE 0.908 * price > 1000000 AND 0.908 * price < 50000000;
 
   -- q15
+  -- Bidding Statistics Report	
+  -- How many distinct users join the bidding for different level of price? Illustrates multiple distinct aggregations with filters.
   CREATE TABLE nexmark_q15 (
     `day` VARCHAR,
     total_bids BIGINT,
@@ -449,6 +465,8 @@ INSERT INTO nexmark_q15
   GROUP BY DATE_FORMAT(dateTime, 'yyyy-MM-dd');
 
 -- q16
+-- Channel Statistics Report	
+-- How many distinct users join the bidding for different level of price for a channel? Illustrates multiple distinct aggregations with filters for multiple keys.
 CREATE TABLE nexmark_q16 (
       channel VARCHAR,
       `day` VARCHAR,
@@ -491,6 +509,8 @@ INSERT INTO nexmark_q16
 
 -- q17
 -- global aggregation
+-- Auction Statistics Report	
+-- How many bids on an auction made a day and what is the price? Illustrates an unbounded group aggregation.
 CREATE TABLE nexmark_q17 (
     auction BIGINT,
     `day` VARCHAR,
@@ -523,6 +543,8 @@ INSERT INTO nexmark_q17
 
 
 -- q18
+-- Find last bid	
+-- What's a's last bid for bidder to auction? Illustrates a Deduplicate query.
 CREATE TABLE nexmark_q18 (
     auction  BIGINT,
     bidder  BIGINT,
@@ -543,6 +565,8 @@ INSERT INTO nexmark_q18
 
 
 -- q19
+-- Auction TOP-10 Price	
+-- What's the top price 10 bids of an auction? Illustrates a TOP-N query.
 CREATE TABLE nexmark_q19 (
     auction  BIGINT,
     bidder  BIGINT,
@@ -562,6 +586,8 @@ INSERT INTO nexmark_q19
   WHERE rank_number <= 10;
 
 -- q20
+-- Expand bid with auction	
+-- Get bids with the corresponding auction information where category is 10. Illustrates a filter join.
 CREATE TABLE nexmark_q20 (
     auction  BIGINT,
     bidder  BIGINT,
@@ -594,6 +620,8 @@ INSERT INTO nexmark_q20
 
 
 -- q21
+-- Add channel id	Add a channel_id column to the bid table. 
+-- Illustrates a 'CASE WHEN' + 'REGEXP_EXTRACT' SQL.
 CREATE TABLE nexmark_q21 (
     auction  BIGINT,
     bidder  BIGINT,
@@ -619,6 +647,8 @@ INSERT INTO nexmark_q21
             lower(channel) in ('apple', 'google', 'facebook', 'baidu');
 
 -- q22
+-- Get URL Directories	
+-- What is the directory structure of the URL? Illustrates a SPLIT_INDEX SQL.
 CREATE TABLE nexmark_q22 (
       auction  BIGINT,
       bidder  BIGINT,
