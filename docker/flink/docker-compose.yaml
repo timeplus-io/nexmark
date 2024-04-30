@@ -29,11 +29,25 @@ services:
       timeout: 3s
       retries: 5
       start_period: 5s
+
+  init_topic:
+    command:
+      - --brokers=kafka:9092
+      - topic
+      - create
+      - nexmark-auction 
+      - nexmark-person 
+      - nexmark-bid 
+    image: docker.redpanda.com/redpandadata/redpanda:v23.3.11
+    depends_on:
+      kafka:
+        condition: service_healthy
   
   generator:
     command:
       - --max-events=1000000 
       - --num-event-generators=3
+      - --event-rate=30000
     image: ghcr.io/risingwavelabs/nexmark-bench:test-7
     container_name: generator
     environment:
@@ -42,10 +56,9 @@ services:
       BID_TOPIC: nexmark-bid
       PERSON_TOPIC: nexmark-person
       NUM_PARTITIONS: 1
-      SEPARATE_TOPICS: false
+      SEPARATE_TOPICS: true
     depends_on:
-      kafka:
-        condition: service_healthy
+      - init_topic
   
   flink-jobmanager:
     image: flink:1.16.0-scala_2.12-java11
@@ -84,6 +97,8 @@ services:
   flink-sql:
     image: timeplus/flinksql:456bb6f  
     pull_policy: always
+    volumes:
+      - ./scripts:/home/scripts
     ports:
       - "8080:8080"
 

@@ -1,4 +1,17 @@
 
+CREATE STREAM person
+(
+  id int64,
+  name string,
+  emailAddress string,
+  creditCard string,
+  city string,
+  state string,
+  date_time datetime64,
+  extra string
+)
+ENGINE = ExternalStream
+SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-person'
 
 CREATE STREAM auction
 (
@@ -33,6 +46,7 @@ SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-bid'
 -- Pass Through	Measures the monitoring overhead including the source generator.
 
 SELECT auction, bidder, price, date_time, extra 
+FROM bid
 SETTINGS seek_to = 'earliest';
 
 -- q1
