@@ -270,7 +270,7 @@ def start_ksqldb():
     cpu_quota = 12 * 100000  # CPU quota in microseconds (equivalent to 1 core out of 12 cores)
 
     ksqldb_config = {
-        'image': 'confluentinc/ksqldb-server:0.24.0',
+        'image': 'confluentinc/ksqldb-server:0.29.0',
         'ports': {'8088/tcp': 8088},
         'name': 'ksqldb',
         'mem_limit': '4g',
@@ -420,7 +420,9 @@ def test(cases):
 #test(cases)
 
 #kafka_container = init()
-#test_ksqldb('q2')
+#test_flink('q3')
+#test_proton('q3')
+#test_ksqldb('q3')
 #shutdown([kafka_container])
 
-test(['q2'])
+test(['q3'])

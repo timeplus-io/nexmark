@@ -34,6 +34,7 @@ services:
     command:
       - --max-events=1000000 
       - --num-event-generators=3
+      - --event-rate=300000
     image: ghcr.io/risingwavelabs/nexmark-bench:latest
     container_name: generator
     environment:
@@ -48,7 +49,7 @@ services:
         condition: service_healthy    
 
   ksqldb-server:
-    image: confluentinc/ksqldb-server:0.24.0
+    image: confluentinc/ksqldb-server:0.29.0
     container_name: ksqldb-server
     ports:
       - "8088:8088"
@@ -60,7 +61,7 @@ services:
       - kafka
 
   ksqldb-cli:
-    image: confluentinc/ksqldb-cli:0.24.0
+    image: confluentinc/ksqldb-cli:0.29.0
     container_name: ksqldb-cli
     depends_on:
       - kafka

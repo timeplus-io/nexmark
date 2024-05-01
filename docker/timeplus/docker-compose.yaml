@@ -34,6 +34,7 @@ services:
     command:
       - --max-events=1000000 
       - --num-event-generators=3
+      - --event-rate=300000
     image: ghcr.io/risingwavelabs/nexmark-bench:latest
     container_name: generator
     environment:
