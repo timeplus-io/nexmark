@@ -5,11 +5,16 @@ import os
 from kafka import KafkaConsumer
 
 network_name = "network_nexmark"
+kafka_timeout = 3 # timeout of reading data from kafka
 current_path = os.getcwd()
 client = docker.from_env()
 
 def init():
     client.networks.create(network_name, driver="bridge")
+    kafka_container = start_kafka()
+    init_kafka_topic(['nexmark-auction','nexmark-person','nexmark-bid'])
+    generate_data()
+    return kafka_container
 
 def start_kafka():
     # Define container configuration
@@ -82,7 +87,27 @@ def init_kafka_topic(topics):
     }
 
     client.containers.run(**init_topic_config)
-    print("kafka topic created")
+    print(f"kafka topic {topics} created")
+
+def delete_kafka_topic(topics):
+    command = [
+            '--brokers=kafka:9092',
+            'topic',
+            'delete'
+        ]
+    for topic in topics:
+       command.append(topic)
+
+    delete_topic_config = {
+        'image': 'docker.redpanda.com/redpandadata/redpanda:v23.3.11',
+        'command':command,
+        'network': network_name,
+        'detach': False, # blocked until it stops
+        'auto_remove': True
+    }
+
+    client.containers.run(**delete_topic_config)
+    print(f"kafka topic {topics} deleted")
 
 def generate_data():
     generator_config = {
@@ -286,7 +311,7 @@ def run_ksqldb_query(case, ksqldb_container):
         'http://localhost:8088',
         '--file',
         f'/home/scripts/{case}.sql'])
-    print(f"ksql sql {case}.sql done. {exit_code} {output}")
+    print(f"ksql sql {case}.sql done. {exit_code}")
 
 def read_from_kafka(case):
     # read from local instead of inside container
@@ -298,13 +323,16 @@ def read_from_kafka(case):
         size = 0
         while True:
             # Poll for new messages from the topic with a timeout
-            message_batch = consumer.poll(timeout_ms=1000)  # Adjust timeout as needed (in milliseconds)
+            message_batch = consumer.poll(timeout_ms=kafka_timeout*1000)  # Adjust timeout as needed (in milliseconds)
             if message_batch:
                 for tp, messages in message_batch.items():
                     size += len(messages)
             else:
-                print(f"total read {size}, no new messages. exiting...")
-                break
+                if size == 0:
+                    continue
+                else:
+                    print(f"total read {size}, no new messages. exiting...")
+                    break
     except KeyboardInterrupt:
         print("keyboard interrupt detected. Exiting...")
     finally:
@@ -314,53 +342,57 @@ def read_from_kafka(case):
 def cleanup(containers):
     for container in containers:
         container.stop()
-    client.networks.prune()
-    print("all resources have been cleaned up")
+        try:
+            container.wait()
+        finally:
+            pass
+    client.containers.prune()
+    client.volumes.prune()
+    print("test resources have been cleaned up")
 
+def shutdown(containers):
+    for container in containers:
+        container.stop()
+    client.networks.prune()
+    print("test stack have been showdown")
 
 def test_flink(case):
-    init()
-    kafka_container = start_kafka()
-    init_kafka_topic(['nexmark-auction','nexmark-person','nexmark-bid'])
-    generate_data()
+    init_kafka_topic([f'nexmark_{case}'])
     flink_jobmanager_container, flink_taskmanager_container = start_flink()
     start_time = time.time()
     run_flink_query(case)
     read_from_kafka(case)
     end_time = time.time()
-    elapsed_time = end_time - start_time
+    elapsed_time = end_time - start_time - kafka_timeout
     print(f"flink {case} takes time: {elapsed_time:.6f} seconds")
-    cleanup([kafka_container,flink_jobmanager_container,flink_taskmanager_container])
+    cleanup([flink_jobmanager_container,flink_taskmanager_container])
+    delete_kafka_topic([f'nexmark_{case}'])
     return elapsed_time
 
 def test_proton(case):
-    init()
-    kafka_container = start_kafka()
-    init_kafka_topic(['nexmark-auction','nexmark-person','nexmark-bid', f'nexmark_{case}'])
-    generate_data()
+    init_kafka_topic([f'nexmark_{case}'])
     proton_container = start_proton()
     start_time = time.time()
     run_proton_query(case, proton_container)
     read_from_kafka(case)
     end_time = time.time()
-    elapsed_time = end_time - start_time
+    elapsed_time = end_time - start_time - kafka_timeout
     print(f"proton {case} takes time: {elapsed_time:.6f} seconds")
-    cleanup([kafka_container,proton_container])
+    cleanup([proton_container])
+    delete_kafka_topic([f'nexmark_{case}'])
     return elapsed_time
 
 def test_ksqldb(case):
-    init()
-    kafka_container = start_kafka()
-    init_kafka_topic(['nexmark-auction','nexmark-person','nexmark-bid', f'nexmark_{case}'])
-    generate_data()
+    init_kafka_topic([f'nexmark_{case}'])
     ksqldb_container = start_ksqldb()
     start_time = time.time()
     run_ksqldb_query(case, ksqldb_container)
     read_from_kafka(case)
     end_time = time.time()
-    elapsed_time = end_time - start_time
+    elapsed_time = end_time - start_time - kafka_timeout
     print(f"ksqldb {case} takes time: {elapsed_time:.6f} seconds")
-    cleanup([kafka_container,ksqldb_container])
+    cleanup([ksqldb_container])
+    delete_kafka_topic([f'nexmark_{case}'])
     return elapsed_time
 
 
@@ -376,11 +408,19 @@ def test_one(case):
     return result
 
 def test(cases):
+    kafka_container = init()
     result = []
     for case in cases:
         result_one = test_one(case)
         result += result_one
     print(f"test result is {result}")
+    shutdown([kafka_container])
 
-cases = ['q0','q1']
-test(cases)
+#cases = ['q0','q1']
+#test(cases)
+
+#kafka_container = init()
+#test_ksqldb('q2')
+#shutdown([kafka_container])
+
+test(['q2'])
