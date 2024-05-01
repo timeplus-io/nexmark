@@ -6,6 +6,7 @@ from kafka import KafkaConsumer
 
 network_name = "network_nexmark"
 kafka_timeout = 3 # timeout of reading data from kafka
+data_size = 10000000
 current_path = os.getcwd()
 client = docker.from_env()
 
@@ -113,7 +114,7 @@ def generate_data():
     generator_config = {
         'image': 'ghcr.io/risingwavelabs/nexmark-bench:test-7',
         'command': [
-            '--max-events=1000000',
+            f'--max-events={data_size}',
             '--num-event-generators=3',
             '--event-rate=300000'
         ],
@@ -420,9 +421,9 @@ def test(cases):
 #test(cases)
 
 #kafka_container = init()
-#test_flink('q4')
-#test_proton('q4')
+#test_flink('base')
+#test_proton('base')
 #test_ksqldb('q4')
 #shutdown([kafka_container])
 
-test(['q4'])
+test(['q3'])
