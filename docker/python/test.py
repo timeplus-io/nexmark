@@ -331,6 +331,7 @@ def test_flink(case):
     elapsed_time = end_time - start_time
     print(f"flink {case} takes time: {elapsed_time:.6f} seconds")
     cleanup([kafka_container,flink_jobmanager_container,flink_taskmanager_container])
+    return elapsed_time
 
 def test_proton(case):
     init()
@@ -345,6 +346,7 @@ def test_proton(case):
     elapsed_time = end_time - start_time
     print(f"proton {case} takes time: {elapsed_time:.6f} seconds")
     cleanup([kafka_container,proton_container])
+    return elapsed_time
 
 def test_ksqldb(case):
     init()
@@ -359,9 +361,26 @@ def test_ksqldb(case):
     elapsed_time = end_time - start_time
     print(f"ksqldb {case} takes time: {elapsed_time:.6f} seconds")
     cleanup([kafka_container,ksqldb_container])
+    return elapsed_time
 
-    
-test_flink('q0')
-test_proton('q0')
-test_ksqldb('q0')
 
+def test_one(case):
+    result = []
+    flink_result = test_flink(case)
+    proton_result = test_proton(case)
+    ksqldb_result = test_ksqldb(case)
+
+    result.append((case, 'flink', flink_result))
+    result.append((case, 'proton', proton_result))
+    result.append((case, 'ksqldb', ksqldb_result))
+    return result
+
+def test(cases):
+    result = []
+    for case in cases:
+        result_one = test_one(case)
+        result += result_one
+    print(f"test result is {result}")
+
+cases = ['q0','q1']
+test(cases)
