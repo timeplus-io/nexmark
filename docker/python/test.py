@@ -7,7 +7,9 @@ from kafka import KafkaConsumer
 network_name = "network_nexmark"
 current_path = os.getcwd()
 client = docker.from_env()
-client.networks.create(network_name, driver="bridge")
+
+def init():
+    client.networks.create(network_name, driver="bridge")
 
 def start_kafka():
     # Define container configuration
@@ -168,7 +170,7 @@ def start_flink():
     print("flink cluster is ready and accessible.")
     return flink_jobmanager_container, flink_taskmanager_container
 
-def run_flink_query():
+def run_flink_query(case):
     flink_sql_config = {
         'image': 'timeplus/flinksql:456bb6f',
         'entrypoint': [
@@ -177,7 +179,7 @@ def run_flink_query():
             '-l',
             '/opt/sql-client/lib',
             '-f',
-             '/home/scripts/q0.sql'
+             f'/home/scripts/{case}.sql'
         ],
         'volumes': {f'{current_path}/scripts/flink': {'bind': '/home/scripts', 'mode': 'rw'}},
         'network': network_name,
@@ -187,20 +189,73 @@ def run_flink_query():
 
     # Start flink-sql container
     client.containers.run(**flink_sql_config)
-    print("flink sql q0.sql done.")
+    print(f"flink sql {case}.sql done.")
 
-def read_from_kafka():
+def start_proton():
+    cpu_period = 100000  # CPU period in microseconds (e.g., 100ms)
+    cpu_quota = 12 * 100000  # CPU quota in microseconds (equivalent to 1 core out of 12 cores)
+
+    proton_config = {
+        'image': 'ghcr.io/timeplus-io/proton:latest',
+        'ports': {
+            '3218/tcp': 3218, # HTTP Streaming
+            '8123/tcp': 8123, # HTTP Snapshot
+            '8463/tcp':8463 # TCP Streaming
+        },
+        'name': 'proton',
+        'mem_limit': '4g',
+        'cpu_period': cpu_period,
+        'cpu_quota':cpu_quota,
+        'network': network_name,
+        'volumes': {f'{current_path}/scripts/proton': {'bind': '/home/scripts', 'mode': 'rw'}},
+        'healthcheck': {
+            'test': ["CMD", "curl", "http://localhost:3218/proton/ping"],
+            'interval': 2 * 1000000000,  # 2 seconds in nanoseconds
+            'timeout': 10 * 1000000000,    # 10 seconds in nanoseconds
+            'retries': 3,
+            'start_period': 10 * 1000000000  # 10 seconds in nanoseconds
+        },
+        'detach': True,  # Run container in detached mode
+        'auto_remove': True
+    }
+
+    proton_container = client.containers.run(**proton_config)
+    print("proton container started:", proton_container.id)
+
+    for i in range(100):
+        c = client.containers.get(proton_container.id)
+        health_status = c.attrs['State']['Health']['Status']
+        print("proton container health status:", health_status)
+        if health_status == 'healthy':
+            break
+        time.sleep(3)
+    return proton_container
+
+def run_proton_query(case, proton_container):
+    exit_code, output = proton_container.exec_run(['proton-client',
+        '-h',
+        'proton',
+        '--multiquery',
+        '--queries-file',
+        f'/home/scripts/{case}.sql'])
+    print(f"proton sql {case}.sql done. {exit_code} {output}")
+
+def read_from_kafka(case):
     # read from local instead of inside container
-    consumer = KafkaConsumer('flink_nexmark_q0', 
+    consumer = KafkaConsumer(f'nexmark_{case}', 
         bootstrap_servers='localhost:19092',
         auto_offset_reset='earliest',
         enable_auto_commit=False)
     try:
+        size = 0
         while True:
             # Poll for new messages from the topic with a timeout
             message_batch = consumer.poll(timeout_ms=1000)  # Adjust timeout as needed (in milliseconds)
-            if not message_batch:
-                print("no new messages. exiting...")
+            if message_batch:
+                for tp, messages in message_batch.items():
+                    size += len(messages)
+            else:
+                print(f"total read {size}, no new messages. exiting...")
                 break
     except KeyboardInterrupt:
         print("keyboard interrupt detected. Exiting...")
@@ -214,14 +269,35 @@ def cleanup(containers):
     client.networks.prune()
     print("all resources have been cleaned up")
 
-kafka_container = start_kafka()
-init_kafka_topic(['nexmark-auction','nexmark-person','nexmark-bid'])
-generate_data()
-flink_jobmanager_container, flink_taskmanager_container = start_flink()
-start_time = time.time()
-run_flink_query()
-read_from_kafka()
-end_time = time.time()
-elapsed_time = end_time - start_time
-print(f"q0 takes time: {elapsed_time:.6f} seconds")
-cleanup([kafka_container,flink_jobmanager_container,flink_taskmanager_container])
+
+def test_flink(case):
+    init()
+    kafka_container = start_kafka()
+    init_kafka_topic(['nexmark-auction','nexmark-person','nexmark-bid'])
+    generate_data()
+    flink_jobmanager_container, flink_taskmanager_container = start_flink()
+    start_time = time.time()
+    run_flink_query(case)
+    read_from_kafka(case)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"flink {case} takes time: {elapsed_time:.6f} seconds")
+    cleanup([kafka_container,flink_jobmanager_container,flink_taskmanager_container])
+
+def test_proton(case):
+    init()
+    kafka_container = start_kafka()
+    init_kafka_topic(['nexmark-auction','nexmark-person','nexmark-bid', f'nexmark_{case}'])
+    generate_data()
+    proton_container = start_proton()
+    start_time = time.time()
+    run_proton_query(case, proton_container)
+    read_from_kafka(case)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"proton {case} takes time: {elapsed_time:.6f} seconds")
+    cleanup([kafka_container,proton_container])
+
+test_flink('q0')
+test_proton('q0')
+
