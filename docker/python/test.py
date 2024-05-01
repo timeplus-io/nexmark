@@ -240,6 +240,54 @@ def run_proton_query(case, proton_container):
         f'/home/scripts/{case}.sql'])
     print(f"proton sql {case}.sql done. {exit_code} {output}")
 
+def start_ksqldb():
+    cpu_period = 100000  # CPU period in microseconds (e.g., 100ms)
+    cpu_quota = 12 * 100000  # CPU quota in microseconds (equivalent to 1 core out of 12 cores)
+
+    ksqldb_config = {
+        'image': 'confluentinc/ksqldb-server:0.24.0',
+        'ports': {'8088/tcp': 8088},
+        'name': 'ksqldb',
+        'mem_limit': '4g',
+        'cpu_period': cpu_period,
+        'cpu_quota':cpu_quota,
+        'network': network_name,
+        'environment': {
+            'KSQL_BOOTSTRAP_SERVERS': 'kafka:9092',
+            'KSQL_LISTENERS': 'http://0.0.0.0:8088/',
+            'KSQL_KSQL_SERVICE_ID': 'ksql_service_'
+        },
+        'volumes': {f'{current_path}/scripts/ksqldb': {'bind': '/home/scripts', 'mode': 'rw'}},
+        'healthcheck': {
+            'test': ["CMD", "curl", "http://localhost:8088/info"],
+            'interval': 2 * 1000000000,  # 2 seconds in nanoseconds
+            'timeout': 10 * 1000000000,    # 10 seconds in nanoseconds
+            'retries': 3,
+            'start_period': 10 * 1000000000  # 10 seconds in nanoseconds
+        },
+        'detach': True,  # Run container in detached mode
+        'auto_remove': True
+    }
+
+    ksqldb_container = client.containers.run(**ksqldb_config)
+    print("ksqldb container started:", ksqldb_container.id)
+
+    for i in range(100):
+        c = client.containers.get(ksqldb_container.id)
+        health_status = c.attrs['State']['Health']['Status']
+        print("ksqldb container health status:", health_status)
+        if health_status == 'healthy':
+            break
+        time.sleep(3)
+    return ksqldb_container
+
+def run_ksqldb_query(case, ksqldb_container):
+    exit_code, output = ksqldb_container.exec_run(['ksql',
+        'http://localhost:8088',
+        '--file',
+        f'/home/scripts/{case}.sql'])
+    print(f"ksql sql {case}.sql done. {exit_code} {output}")
+
 def read_from_kafka(case):
     # read from local instead of inside container
     consumer = KafkaConsumer(f'nexmark_{case}', 
@@ -298,6 +346,22 @@ def test_proton(case):
     print(f"proton {case} takes time: {elapsed_time:.6f} seconds")
     cleanup([kafka_container,proton_container])
 
+def test_ksqldb(case):
+    init()
+    kafka_container = start_kafka()
+    init_kafka_topic(['nexmark-auction','nexmark-person','nexmark-bid', f'nexmark_{case}'])
+    generate_data()
+    ksqldb_container = start_ksqldb()
+    start_time = time.time()
+    run_ksqldb_query(case, ksqldb_container)
+    read_from_kafka(case)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"ksqldb {case} takes time: {elapsed_time:.6f} seconds")
+    cleanup([kafka_container,ksqldb_container])
+
+    
 test_flink('q0')
 test_proton('q0')
+test_ksqldb('q0')
 

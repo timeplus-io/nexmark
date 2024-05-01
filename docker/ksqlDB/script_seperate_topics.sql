@@ -11,7 +11,8 @@ CREATE STREAM auction (
   extra VARCHAR
 ) WITH (
     KAFKA_TOPIC='nexmark-auction',
-    VALUE_FORMAT='JSON'
+    VALUE_FORMAT='JSON',
+    TIMESTAMP='date_time'
 )
 
 CREATE TABLE tauction (
