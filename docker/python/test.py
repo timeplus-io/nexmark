@@ -420,9 +420,9 @@ def test(cases):
 #test(cases)
 
 #kafka_container = init()
-#test_flink('q3')
-#test_proton('q3')
-#test_ksqldb('q3')
+#test_flink('q4')
+#test_proton('q4')
+#test_ksqldb('q4')
 #shutdown([kafka_container])
 
-test(['q3'])
+test(['q4'])

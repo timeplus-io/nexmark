@@ -97,8 +97,6 @@ services:
   flink-sql:
     image: timeplus/flinksql:456bb6f  
     pull_policy: always
-    volumes:
-      - ./scripts:/home/scripts
     ports:
       - "8080:8080"
 

@@ -1,23 +1,3 @@
-CREATE TABLE person (
-  id  BIGINT,
-  name  VARCHAR,
-  emailAddress  VARCHAR,
-  creditCard  VARCHAR,
-  city  VARCHAR,
-  state  VARCHAR,
-  date_time TIMESTAMP(3),
-  extra  VARCHAR,
-  WATERMARK FOR date_time AS date_time - INTERVAL '4' SECOND
-) WITH (
-    'connector' = 'kafka',
-    'topic' = 'nexmark-person',
-    'properties.bootstrap.servers' = 'kafka:9092',
-    'properties.group.id' = 'nexmark-person',
-    'scan.startup.mode' = 'earliest-offset',
-    'sink.partitioner' = 'fixed',
-    'format' = 'json'
-);
-
 CREATE TABLE auction (
   id  BIGINT,
   itemName  VARCHAR,
@@ -59,20 +39,27 @@ CREATE TABLE bid (
     'format' = 'json'
 );
 
--- q0
--- Pass Through	Measures the monitoring overhead including the source generator.
-CREATE TABLE nexmark_q0 (
-  auction  BIGINT,
-  bidder  BIGINT,
-  price  BIGINT,
-  date_time  TIMESTAMP(3),
-  extra  VARCHAR
+-- using upsert with avro
+CREATE TABLE nexmark_q4 (
+  id BIGINT,
+  final BIGINT,
+  PRIMARY KEY (id) NOT ENFORCED
 ) WITH (
-  'connector' = 'kafka',
-  'topic' = 'flink_nexmark_q0',
+  'connector' = 'upsert-kafka',
+  'topic' = 'nexmark_q4',
   'properties.bootstrap.servers' = 'kafka:9092',
-  'format' = 'json'
+  'key.format' = 'json',
+  'value.format' = 'json'
 );
-
-INSERT INTO nexmark_q0
-  SELECT auction, bidder, price, date_time, extra FROM bid;
+    
+INSERT INTO nexmark_q4
+  SELECT
+      Q.category,
+      AVG(Q.final)
+  FROM (
+      SELECT MAX(B.price) AS final, A.category
+      FROM auction A, bid B
+      WHERE A.id = B.auction AND B.date_time BETWEEN A.date_time AND A.expires
+      GROUP BY A.id, A.category
+  ) Q
+  GROUP BY Q.category;

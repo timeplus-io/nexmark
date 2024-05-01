@@ -30,12 +30,25 @@ services:
       retries: 5
       start_period: 5s
   
+  init_topic:
+    command:
+      - --brokers=kafka:9092
+      - topic
+      - create
+      - nexmark-auction 
+      - nexmark-person 
+      - nexmark-bid 
+    image: docker.redpanda.com/redpandadata/redpanda:v23.3.11
+    depends_on:
+      kafka:
+        condition: service_healthy
+  
   generator:
     command:
       - --max-events=1000000 
       - --num-event-generators=3
       - --event-rate=300000
-    image: ghcr.io/risingwavelabs/nexmark-bench:latest
+    image: ghcr.io/risingwavelabs/nexmark-bench:test-7
     container_name: generator
     environment:
       KAFKA_HOST: kafka:9092
@@ -45,8 +58,7 @@ services:
       NUM_PARTITIONS: 1
       SEPARATE_TOPICS: true
     depends_on:
-      kafka:
-        condition: service_healthy    
+      - init_topic 
 
   ksqldb-server:
     image: confluentinc/ksqldb-server:0.29.0
