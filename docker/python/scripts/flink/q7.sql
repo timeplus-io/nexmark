@@ -69,7 +69,7 @@ CREATE TABLE nexmark_q7 (
   extra  VARCHAR
 ) WITH (
   'connector' = 'kafka',
-  'topic' = 'nexmark_q7',
+  'topic' = 'NEXMARK_Q7',
   'properties.bootstrap.servers' = 'kafka:9092',
   'format' = 'json'
 );

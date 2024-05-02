@@ -2,7 +2,7 @@ CREATE STREAM target_stream (
     id INT,
     message VARCHAR
 ) WITH (
-    kafka_topic='nexmark_base', 
+    kafka_topic='NEXMARK_BASE', 
     value_format='json'
 );
 

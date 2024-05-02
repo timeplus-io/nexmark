@@ -55,6 +55,6 @@ CREATE STREAM processing_stream AS
     FROM bid;
 
 CREATE STREAM output_stream
-    WITH (kafka_topic='nexmark_q1', value_format='json')
+    WITH (kafka_topic='NEXMARK_Q1', value_format='json')
     AS SELECT *
     FROM processing_stream;

@@ -2,7 +2,7 @@ CREATE STREAM q4_stream (
     id INT,
     message VARCHAR
 ) WITH (
-    kafka_topic='nexmark_q4', 
+    kafka_topic='NEXMARK_Q4', 
     value_format='json'
 );
 

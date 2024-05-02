@@ -50,7 +50,7 @@ CREATE EXTERNAL STREAM target(
     channel_id string)
     SETTINGS type='kafka', 
              brokers='kafka:9092', 
-             topic='nexmark_q21', 
+             topic='NEXMARK_Q21', 
              data_format='JSONEachRow',
              one_message_per_row=true;
 

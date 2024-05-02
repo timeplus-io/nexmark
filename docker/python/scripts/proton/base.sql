@@ -3,7 +3,7 @@ CREATE EXTERNAL STREAM target(
     message string) 
     SETTINGS type='kafka', 
              brokers='kafka:9092', 
-             topic='nexmark_base', 
+             topic='NEXMARK_BASE', 
              data_format='JSONEachRow',
              one_message_per_row=true;
 

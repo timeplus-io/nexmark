@@ -47,7 +47,7 @@ CREATE EXTERNAL STREAM target(
     wb array(tuple(int64, int64, string, int64))) 
     SETTINGS type='kafka', 
              brokers='kafka:9092', 
-             topic='nexmark_q9', 
+             topic='NEXMARK_Q9', 
              data_format='JSONEachRow',
              one_message_per_row=true;
 

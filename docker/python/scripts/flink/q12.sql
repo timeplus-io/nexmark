@@ -68,7 +68,7 @@ CREATE TABLE nexmark_q12 (
   endtime TIMESTAMP(3)
 ) WITH (
   'connector' = 'kafka',
-  'topic' = 'nexmark_q12',
+  'topic' = 'NEXMARK_Q12',
   'properties.bootstrap.servers' = 'kafka:9092',
   'format' = 'json'
 );

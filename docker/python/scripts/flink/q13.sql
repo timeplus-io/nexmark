@@ -80,13 +80,13 @@ CREATE TABLE nexmark_q13 (
   `value`  VARCHAR
 ) WITH (
   'connector' = 'kafka',
-  'topic' = 'nexmark_q13',
+  'topic' = 'NEXMARK_Q13',
   'properties.bootstrap.servers' = 'kafka:9092',
   'format' = 'json'
 );
 
 INSERT INTO nexmark_q13
-  SSELECT
+  SELECT
       B.auction,
       B.bidder,
       B.price,

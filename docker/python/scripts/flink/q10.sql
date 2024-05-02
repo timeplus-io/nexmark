@@ -80,7 +80,7 @@ CREATE TABLE nexmark_q10 (
   PRIMARY KEY (id) NOT ENFORCED
 ) WITH (
   'connector' = 'upsert-kafka',
-  'topic' = 'nexmark_q10',
+  'topic' = 'NEXMARK_Q10',
   'properties.bootstrap.servers' = 'kafka:9092',
   'key.format' = 'json',
   'value.format' = 'json'

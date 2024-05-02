@@ -58,7 +58,7 @@ CREATE EXTERNAL STREAM target(
     rank3_auctions int64) 
     SETTINGS type='kafka', 
              brokers='kafka:9092', 
-             topic='nexmark_q15', 
+             topic='NEXMARK_Q15', 
              data_format='JSONEachRow',
              one_message_per_row=true;
 

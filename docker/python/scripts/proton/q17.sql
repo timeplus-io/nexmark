@@ -55,7 +55,7 @@ CREATE EXTERNAL STREAM target(
     sum_price int64) 
     SETTINGS type='kafka', 
              brokers='kafka:9092', 
-             topic='nexmark_q17', 
+             topic='NEXMARK_Q17', 
              data_format='JSONEachRow',
              one_message_per_row=true;
 

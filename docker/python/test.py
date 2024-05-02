@@ -316,7 +316,7 @@ def run_ksqldb_query(case, ksqldb_container):
 
 def read_from_kafka(case):
     # read from local instead of inside container
-    consumer = KafkaConsumer(f'nexmark_{case}', 
+    consumer = KafkaConsumer(f'nexmark_{case}'.upper(), 
         bootstrap_servers='localhost:19092',
         auto_offset_reset='earliest',
         enable_auto_commit=False)
@@ -343,10 +343,6 @@ def read_from_kafka(case):
 def cleanup(containers):
     for container in containers:
         container.stop()
-        try:
-            container.wait()
-        finally:
-            pass
     client.containers.prune()
     client.volumes.prune()
     print("test resources have been cleaned up")
@@ -358,7 +354,7 @@ def shutdown(containers):
     print("test stack have been showdown")
 
 def test_flink(case):
-    init_kafka_topic([f'nexmark_{case}'])
+    init_kafka_topic([f'nexmark_{case}'.upper()])
     flink_jobmanager_container, flink_taskmanager_container = start_flink()
     start_time = time.time()
     run_flink_query(case)
@@ -367,11 +363,11 @@ def test_flink(case):
     elapsed_time = end_time - start_time - kafka_timeout
     print(f"flink {case} takes time: {elapsed_time:.6f} seconds")
     cleanup([flink_jobmanager_container,flink_taskmanager_container])
-    delete_kafka_topic([f'nexmark_{case}'])
+    delete_kafka_topic([f'nexmark_{case}'.upper()])
     return elapsed_time
 
 def test_proton(case):
-    init_kafka_topic([f'nexmark_{case}'])
+    init_kafka_topic([f'nexmark_{case}'.upper()])
     proton_container = start_proton()
     start_time = time.time()
     run_proton_query(case, proton_container)
@@ -380,11 +376,11 @@ def test_proton(case):
     elapsed_time = end_time - start_time - kafka_timeout
     print(f"proton {case} takes time: {elapsed_time:.6f} seconds")
     cleanup([proton_container])
-    delete_kafka_topic([f'nexmark_{case}'])
+    delete_kafka_topic([f'nexmark_{case}'.upper()])
     return elapsed_time
 
 def test_ksqldb(case):
-    init_kafka_topic([f'nexmark_{case}'])
+    init_kafka_topic([f'nexmark_{case}'.upper()])
     ksqldb_container = start_ksqldb()
     start_time = time.time()
     run_ksqldb_query(case, ksqldb_container)
@@ -393,7 +389,7 @@ def test_ksqldb(case):
     elapsed_time = end_time - start_time - kafka_timeout
     print(f"ksqldb {case} takes time: {elapsed_time:.6f} seconds")
     cleanup([ksqldb_container])
-    delete_kafka_topic([f'nexmark_{case}'])
+    delete_kafka_topic([f'nexmark_{case}'.upper()])
     return elapsed_time
 
 
@@ -420,10 +416,10 @@ def test(cases):
 #cases = ['q0','q1']
 #test(cases)
 
-kafka_container = init()
-test_flink('q22')
-#test_proton('q19')
-#test_ksqldb('q4')
-shutdown([kafka_container])
+#kafka_container = init()
+#test_flink('q22')
+#test_proton('q6')
+#test_ksqldb('q22')
+#shutdown([kafka_container])
 
-#test(['q5'])
+test(['q22'])

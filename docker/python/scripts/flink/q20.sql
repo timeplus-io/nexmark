@@ -81,7 +81,7 @@ CREATE TABLE nexmark_q20 (
   auction_extra  VARCHAR
 ) WITH (
   'connector' = 'kafka',
-  'topic' = 'nexmark_q20',
+  'topic' = 'NEXMARK_Q20',
   'properties.bootstrap.servers' = 'kafka:9092',
   'format' = 'json'
 );

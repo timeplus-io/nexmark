@@ -47,7 +47,7 @@ CREATE EXTERNAL STREAM target(
     last_bid int64) 
     SETTINGS type='kafka', 
              brokers='kafka:9092', 
-             topic='nexmark_q18', 
+             topic='NEXMARK_Q18', 
              data_format='JSONEachRow',
              one_message_per_row=true;
 

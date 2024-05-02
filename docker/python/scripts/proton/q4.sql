@@ -32,7 +32,7 @@ CREATE EXTERNAL STREAM target(
     avg_final  float64) 
     SETTINGS type='kafka', 
              brokers='kafka:9092', 
-             topic='nexmark_q4', 
+             topic='NEXMARK_Q4', 
              data_format='JSONEachRow',
              one_message_per_row=true;
 

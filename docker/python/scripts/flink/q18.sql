@@ -73,7 +73,7 @@ CREATE TABLE nexmark_q18 (
   PRIMARY KEY (auction, bidder) NOT ENFORCED
 ) WITH (
   'connector' = 'upsert-kafka',
-  'topic' = 'nexmark_q18',
+  'topic' = 'NEXMARK_Q18',
   'properties.bootstrap.servers' = 'kafka:9092',
   'key.format' = 'json',
   'value.format' = 'json'

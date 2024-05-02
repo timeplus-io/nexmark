@@ -49,6 +49,6 @@ CREATE STREAM processing_stream AS
     SELECT auction, bidder, price, date_time, extra FROM bid;
 
 CREATE STREAM output_stream
-    WITH (kafka_topic='nexmark_q0', value_format='json')
+    WITH (kafka_topic='NEXMARK_Q0', value_format='json')
     AS SELECT *
     FROM processing_stream;

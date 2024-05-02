@@ -70,7 +70,7 @@ CREATE TABLE nexmark_q21 (
   channel_id  VARCHAR
 ) WITH (
   'connector' = 'kafka',
-  'topic' = 'nexmark_q21',
+  'topic' = 'NEXMARK_Q21',
   'properties.bootstrap.servers' = 'kafka:9092',
   'format' = 'json'
 );

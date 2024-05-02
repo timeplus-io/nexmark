@@ -48,7 +48,7 @@ CREATE EXTERNAL STREAM target(
     we datetime64) 
     SETTINGS type='kafka', 
              brokers='kafka:9092', 
-             topic='nexmark_q12', 
+             topic='NEXMARK_Q12', 
              data_format='JSONEachRow',
              one_message_per_row=true;
 

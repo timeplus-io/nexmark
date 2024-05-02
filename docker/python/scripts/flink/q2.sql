@@ -65,7 +65,7 @@ CREATE TABLE nexmark_q2 (
   price  BIGINT
 ) WITH (
   'connector' = 'kafka',
-  'topic' = 'nexmark_q2',
+  'topic' = 'NEXMARK_Q2',
   'properties.bootstrap.servers' = 'kafka:9092',
   'format' = 'json'
 );

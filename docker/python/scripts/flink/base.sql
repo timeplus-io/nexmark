@@ -3,7 +3,7 @@ CREATE TABLE nexmark_base (
   message VARCHAR
 ) WITH (
   'connector' = 'kafka',
-  'topic' = 'nexmark_base',
+  'topic' = 'NEXMARK_BASE',
   'properties.bootstrap.servers' = 'kafka:9092',
   'format' = 'json'
 );

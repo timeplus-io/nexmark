@@ -60,6 +60,6 @@ CREATE STREAM processing_stream AS
         A.category = 14 and (P.state = 'or' OR P.state = 'wy' OR P.state = 'ca');
 
 CREATE STREAM output_stream
-    WITH (kafka_topic='nexmark_q3', value_format='json')
+    WITH (kafka_topic='NEXMARK_Q3', value_format='json')
     AS SELECT *
     FROM processing_stream;

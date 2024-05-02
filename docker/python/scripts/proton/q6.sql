@@ -46,7 +46,7 @@ CREATE EXTERNAL STREAM target(
     avg_sell_price float64) 
     SETTINGS type='kafka', 
              brokers='kafka:9092', 
-             topic='nexmark_q6', 
+             topic='NEXMARK_Q6', 
              data_format='JSONEachRow',
              one_message_per_row=true;
 
