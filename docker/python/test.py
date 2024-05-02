@@ -421,8 +421,8 @@ def test(cases):
 #test(cases)
 
 kafka_container = init()
-#test_flink('q5')
-test_proton('q22')
+test_flink('q22')
+#test_proton('q19')
 #test_ksqldb('q4')
 shutdown([kafka_container])
 

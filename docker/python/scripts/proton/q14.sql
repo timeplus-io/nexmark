@@ -55,7 +55,7 @@ CREATE EXTERNAL STREAM target(
              data_format='JSONEachRow',
              one_message_per_row=true;
 
--- tumble
+-- UDF
 CREATE MATERIALIZED VIEW mv INTO target AS 
   SELECT
     auction, 
