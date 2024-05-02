@@ -6,7 +6,7 @@ from kafka import KafkaConsumer
 
 network_name = "network_nexmark"
 kafka_timeout = 3 # timeout of reading data from kafka
-data_size = 10000000
+data_size = 1000000
 current_path = os.getcwd()
 client = docker.from_env()
 
@@ -420,10 +420,10 @@ def test(cases):
 #cases = ['q0','q1']
 #test(cases)
 
-#kafka_container = init()
+kafka_container = init()
 #test_flink('q5')
-#test_proton('base')
+test_proton('q22')
 #test_ksqldb('q4')
-#shutdown([kafka_container])
+shutdown([kafka_container])
 
-test(['q5'])
+#test(['q5'])

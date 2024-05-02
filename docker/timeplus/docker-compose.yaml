@@ -62,7 +62,6 @@ services:
 
   timeplus:
     image: timeplus/timeplus-aio:latest
-    pull_policy: always
     volumes:
     - ./initdb.d:/docker-entrypoint-initdb.d
     ports:
