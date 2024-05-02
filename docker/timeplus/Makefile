@@ -1,9 +1,11 @@
 
 start:
-	docker-compose up
+	docker-compose up -d
 
-topic:
-	docker exec -it kafka rpk topic create nexmark-auction nexmark-person nexmark-bid nexmark-events
 
-gen:
-	docker-compose start generator
+clean:
+	docker system prune -f
+	docker volume prune -f
+
+stop:
+	docker-compose down

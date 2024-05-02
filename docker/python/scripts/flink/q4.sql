@@ -39,7 +39,7 @@ CREATE TABLE bid (
     'format' = 'json'
 );
 
--- using upsert with avro
+-- using upsert with json
 CREATE TABLE nexmark_q4 (
   id BIGINT,
   final BIGINT,
