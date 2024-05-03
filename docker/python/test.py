@@ -1,20 +1,21 @@
-import docker
-import time
-import requests
 import os
+import time
+import docker
+import requests
+import click
+
 from kafka import KafkaConsumer
 
 network_name = "network_nexmark"
 kafka_timeout = 3 # timeout of reading data from kafka
-data_size = 1000000
 current_path = os.getcwd()
 client = docker.from_env()
 
-def init():
+def init(data_size=1000000):
     client.networks.create(network_name, driver="bridge")
     kafka_container = start_kafka()
     init_kafka_topic(['nexmark-auction','nexmark-person','nexmark-bid'])
-    generate_data()
+    generate_data(data_size=data_size)
     return kafka_container
 
 def start_kafka():
@@ -110,7 +111,7 @@ def delete_kafka_topic(topics):
     client.containers.run(**delete_topic_config)
     print(f"kafka topic {topics} deleted")
 
-def generate_data():
+def generate_data(data_size=1000000):
     generator_config = {
         'image': 'ghcr.io/risingwavelabs/nexmark-bench:test-7',
         'command': [
@@ -413,13 +414,31 @@ def test(cases):
     print(f"test result is {result}")
     shutdown([kafka_container])
 
-#cases = ['q0','q1']
-#test(cases)
 
-#kafka_container = init()
-#test_flink('q22')
-#test_proton('q6')
-#test_ksqldb('q22')
-#shutdown([kafka_container])
+@click.command()
+@click.option('--cases', default='base', help='cases to run, default to base')
+@click.option('--targets', default='flink,proton,ksqldb', help='target platforms, default to flink,proton,ksqldb')
+@click.option('--size', default=1000000, help='test data volume, default to 1000000')
+def main(cases, targets, size):
+    kafka_container = init(data_size=size)
+    platforms = targets.split(',')
+    result = []
+    
+    for case in cases.split(','):
+        print(f'run case {case}')
+        if 'flink' in platforms:
+            flink_result = test_flink(case)
+            result.append((case, 'flink', flink_result))
+        if 'proton' in platforms:
+            proton_result = test_proton(case)
+            result.append((case, 'proton', proton_result))
 
-test(['q22'])
+        if 'ksqldb' in platforms:
+            ksqldb_result = test_ksqldb(case)
+            result.append((case, 'ksqldb', ksqldb_result))
+        
+    print(f"test result is {result}")
+    shutdown([kafka_container])
+
+if __name__ == '__main__':
+    main()
