@@ -9,15 +9,15 @@ from datetime import datetime
 from kafka import KafkaConsumer
 
 network_name = "network_nexmark"
-kafka_timeout = 3 # timeout of reading data from kafka
+kafka_timeout = 5 # timeout of reading data from kafka
 current_path = os.getcwd()
 client = docker.from_env()
 
-def init(data_size):
+def init(data_size, event_rate):
     client.networks.create(network_name, driver="bridge")
     kafka_container = start_kafka()
     init_kafka_topic(['nexmark-auction','nexmark-person','nexmark-bid'])
-    generate_data(data_size=data_size)
+    generate_data(data_size=data_size, event_rate=event_rate)
     return kafka_container
 
 def start_kafka():
@@ -113,13 +113,13 @@ def delete_kafka_topic(topics):
     client.containers.run(**delete_topic_config)
     print(f"kafka topic {topics} deleted")
 
-def generate_data(data_size=10000000):
+def generate_data(data_size=10000000, event_rate=300000):
     generator_config = {
         'image': 'ghcr.io/risingwavelabs/nexmark-bench:test-7',
         'command': [
             f'--max-events={data_size}',
             '--num-event-generators=3',
-            '--event-rate=300000'
+            f'--event-rate={event_rate}'
         ],
         'environment': {
             'KAFKA_HOST': 'kafka:9092',
@@ -425,13 +425,14 @@ def test(cases):
 @click.option('--cases', default='base', help='cases to run, default to base')
 @click.option('--targets', default='flink,proton,ksqldb', help='target platforms, default to flink,proton,ksqldb')
 @click.option('--size', default=1000000, help='test data volume, default to 1000000')
-def main(cases, targets, size):
+@click.option('--rate', default=300000, help='test data generation rate, default to 300000')
+def main(cases, targets, size, rate):
     
     platforms = targets.split(',')
     result = []
     
     for case in cases.split(','):
-        kafka_container = init(data_size=size)
+        kafka_container = init(data_size=size, event_rate=rate)
         print(f'run case {case}')
         if 'flink' in platforms:
             flink_result_time, flink_result_size = test_flink(case)
