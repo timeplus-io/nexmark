@@ -11,7 +11,7 @@ kafka_timeout = 3 # timeout of reading data from kafka
 current_path = os.getcwd()
 client = docker.from_env()
 
-def init(data_size=1000000):
+def init(data_size):
     client.networks.create(network_name, driver="bridge")
     kafka_container = start_kafka()
     init_kafka_topic(['nexmark-auction','nexmark-person','nexmark-bid'])
@@ -111,7 +111,7 @@ def delete_kafka_topic(topics):
     client.containers.run(**delete_topic_config)
     print(f"kafka topic {topics} deleted")
 
-def generate_data(data_size=1000000):
+def generate_data(data_size=10000000):
     generator_config = {
         'image': 'ghcr.io/risingwavelabs/nexmark-bench:test-7',
         'command': [
@@ -338,8 +338,8 @@ def read_from_kafka(case):
     except KeyboardInterrupt:
         print("keyboard interrupt detected. Exiting...")
     finally:
-        # Close the KafkaConsumer to release resources
         consumer.close()
+        return size
 
 def cleanup(containers):
     for container in containers:
@@ -359,39 +359,43 @@ def test_flink(case):
     flink_jobmanager_container, flink_taskmanager_container = start_flink()
     start_time = time.time()
     run_flink_query(case)
-    read_from_kafka(case)
+    size = read_from_kafka(case)
     end_time = time.time()
     elapsed_time = end_time - start_time - kafka_timeout
     print(f"flink {case} takes time: {elapsed_time:.6f} seconds")
     cleanup([flink_jobmanager_container,flink_taskmanager_container])
     delete_kafka_topic([f'nexmark_{case}'.upper()])
-    return elapsed_time
+    return elapsed_time, size
 
 def test_proton(case):
     init_kafka_topic([f'nexmark_{case}'.upper()])
     proton_container = start_proton()
     start_time = time.time()
     run_proton_query(case, proton_container)
-    read_from_kafka(case)
+    size = read_from_kafka(case)
     end_time = time.time()
     elapsed_time = end_time - start_time - kafka_timeout
     print(f"proton {case} takes time: {elapsed_time:.6f} seconds")
     cleanup([proton_container])
     delete_kafka_topic([f'nexmark_{case}'.upper()])
-    return elapsed_time
+    return elapsed_time, size
 
 def test_ksqldb(case):
     init_kafka_topic([f'nexmark_{case}'.upper()])
     ksqldb_container = start_ksqldb()
     start_time = time.time()
     run_ksqldb_query(case, ksqldb_container)
-    read_from_kafka(case)
+    size = read_from_kafka(case)
     end_time = time.time()
     elapsed_time = end_time - start_time - kafka_timeout
     print(f"ksqldb {case} takes time: {elapsed_time:.6f} seconds")
     cleanup([ksqldb_container])
     delete_kafka_topic([f'nexmark_{case}'.upper()])
-    return elapsed_time
+    try:
+        delete_kafka_topic(['processing_stream'.upper()])
+    except:
+        pass
+    return elapsed_time, size
 
 
 def test_one(case):
@@ -420,11 +424,12 @@ def test(cases):
 @click.option('--targets', default='flink,proton,ksqldb', help='target platforms, default to flink,proton,ksqldb')
 @click.option('--size', default=1000000, help='test data volume, default to 1000000')
 def main(cases, targets, size):
-    kafka_container = init(data_size=size)
+    
     platforms = targets.split(',')
     result = []
     
     for case in cases.split(','):
+        kafka_container = init(data_size=size)
         print(f'run case {case}')
         if 'flink' in platforms:
             flink_result = test_flink(case)
@@ -436,9 +441,10 @@ def main(cases, targets, size):
         if 'ksqldb' in platforms:
             ksqldb_result = test_ksqldb(case)
             result.append((case, 'ksqldb', ksqldb_result))
+        shutdown([kafka_container])
         
     print(f"test result is {result}")
-    shutdown([kafka_container])
+    
 
 if __name__ == '__main__':
     main()

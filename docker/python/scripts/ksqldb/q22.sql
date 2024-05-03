@@ -13,7 +13,7 @@ CREATE STREAM auction (
     KAFKA_TOPIC='nexmark-auction',
     VALUE_FORMAT='JSON',
     timestamp = 'date_time',
-    timestamp_format = 'yyyy-MM-dd HH:mm:ss'
+    timestamp_format = 'yyyy-MM-dd HH:mm:ss.SSS'
 );
 
 CREATE STREAM person
@@ -30,7 +30,7 @@ CREATE STREAM person
     KAFKA_TOPIC='nexmark-person',
     VALUE_FORMAT='JSON',
     timestamp = 'date_time',                        -- the column to use as a timestamp
-    timestamp_format = 'yyyy-MM-dd HH:mm:ss'
+    timestamp_format = 'yyyy-MM-dd HH:mm:ss.SSS'
 );
 
 CREATE STREAM bid
@@ -46,7 +46,7 @@ CREATE STREAM bid
     KAFKA_TOPIC='nexmark-bid',
     VALUE_FORMAT='JSON',
     timestamp = 'date_time',                        -- the column to use as a timestamp
-    timestamp_format = 'yyyy-MM-dd HH:mm:ss'
+    timestamp_format = 'yyyy-MM-dd HH:mm:ss.SSS'
 );
 
 SET 'auto.offset.reset' = 'earliest';
