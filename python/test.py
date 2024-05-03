@@ -114,6 +114,7 @@ def delete_kafka_topic(topics):
     print(f"kafka topic {topics} deleted")
 
 def generate_data(data_size=10000000, event_rate=300000):
+    print(f'generating test data with size {data_size} and rate {event_rate}')
     generator_config = {
         'image': 'ghcr.io/risingwavelabs/nexmark-bench:test-7',
         'command': [
