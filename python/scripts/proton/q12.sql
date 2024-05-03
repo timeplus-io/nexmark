@@ -57,7 +57,7 @@ CREATE MATERIALIZED VIEW mv INTO target AS
   SELECT
     bidder, count(*) AS bid_count, window_start as ws, window_end as we
   FROM
-    tumble(bid, date_time, INTERVAL 10 SECOND)
+    tumble(bid, _tp_time, INTERVAL 10 SECOND)
   WHERE
     _tp_time > earliest_ts()
   GROUP BY

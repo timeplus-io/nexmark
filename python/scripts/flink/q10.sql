@@ -62,38 +62,20 @@ CREATE TABLE bid (
 -- q10
 -- Log to File System	Log all events to file system. Illustrates windows streaming data into partitioned file system.
 CREATE TABLE nexmark_q10 (
-  id  BIGINT,
-  itemName  VARCHAR,
-  description  VARCHAR,
-  initialBid  BIGINT,
-  reserve  BIGINT,
-  dateTime  TIMESTAMP(3),
-  expires  TIMESTAMP(3),
-  seller  BIGINT,
-  category  BIGINT,
-  extra  VARCHAR,
   auction  BIGINT,
   bidder  BIGINT,
   price  BIGINT,
-  bid_dateTime  TIMESTAMP(3),
-  bid_extra  VARCHAR,
-  PRIMARY KEY (id) NOT ENFORCED
+  date_time  TIMESTAMP(3),
+  extra  VARCHAR,
+  d1 VARCHAR,
+  d2 VARCHAR
 ) WITH (
-  'connector' = 'upsert-kafka',
+  'connector' = 'kafka',
   'topic' = 'NEXMARK_Q10',
   'properties.bootstrap.servers' = 'kafka:9092',
-  'key.format' = 'json',
-  'value.format' = 'json'
+  'format' = 'json'
 );
 
 INSERT INTO nexmark_q10
-  SELECT
-      id, itemName, description, initialBid, reserve, date_time, expires, seller, category, extra,
-      auction, bidder, price, bid_dateTime, bid_extra
-  FROM (
-      SELECT A.*, B.auction, B.bidder, B.price, B.date_time AS bid_dateTime, B.extra AS bid_extra,
-        ROW_NUMBER() OVER (PARTITION BY A.id ORDER BY B.price DESC, B.date_time ASC) AS rownum
-      FROM auction A, bid B
-      WHERE A.id = B.auction AND B.date_time BETWEEN A.date_time AND A.expires
-  )
-  WHERE rownum <= 1;
+  SELECT auction, bidder, price, date_time, extra, DATE_FORMAT(date_time, 'yyyy-MM-dd') as d1, DATE_FORMAT(date_time, 'HH:mm') as d2
+  FROM bid;
