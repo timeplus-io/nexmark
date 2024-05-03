@@ -3,7 +3,9 @@ import time
 import docker
 import requests
 import click
+import csv
 
+from datetime import datetime
 from kafka import KafkaConsumer
 
 network_name = "network_nexmark"
@@ -432,19 +434,37 @@ def main(cases, targets, size):
         kafka_container = init(data_size=size)
         print(f'run case {case}')
         if 'flink' in platforms:
-            flink_result = test_flink(case)
-            result.append((case, 'flink', flink_result))
+            flink_result_time, flink_result_size = test_flink(case)
+            result.append({
+                "case":case, 
+                "platform":'flink', 
+                "time": flink_result_time, 
+                "size": flink_result_size})
         if 'proton' in platforms:
-            proton_result = test_proton(case)
-            result.append((case, 'proton', proton_result))
+            proton_result_time,  proton_result_size= test_proton(case)
+            result.append({
+                "case":case, 
+                "platform":'proton', 
+                "time": proton_result_time, 
+                "size": proton_result_size})
 
         if 'ksqldb' in platforms:
-            ksqldb_result = test_ksqldb(case)
-            result.append((case, 'ksqldb', ksqldb_result))
+            ksqldb_result_time,  ksqldb_result_size = test_ksqldb(case)
+            result.append({
+                "case":case, 
+                "platform":'ksqldb', 
+                "time": ksqldb_result_time, 
+                "size": ksqldb_result_size})
         shutdown([kafka_container])
         
     print(f"test result is {result}")
-    
+    keys = result[0].keys()
+    now = datetime.now()
+    fname = f'report{now.strftime("%m%d%Y%H%M%S")}.csv'
+    with open(fname, 'w', newline='') as output_file:
+        dict_writer = csv.DictWriter(output_file, keys)
+        dict_writer.writeheader()
+        dict_writer.writerows(result)
 
 if __name__ == '__main__':
     main()
