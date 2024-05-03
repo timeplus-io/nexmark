@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nexmarkgen
+  namespace: user-gang
+  labels:
+    app: nexmarkgen
+spec:
+  template:
+    metadata:
+      labels:
+        app: nexmarkgen
+    spec:
+      containers:
+        - name: nexmarkgen
+          image: ghcr.io/risingwavelabs/nexmark-bench:test-7
+          env:
+          - name: KAFKA_HOST
+            value: "kafka.demo-internal:9092"
+          - name: AUCTION_TOPIC
+            value: "nexmark-auction"
+          - name: BID_TOPIC
+            value: "nexmark-bid"
+          - name: PERSON_TOPIC
+            value: "nexmark-person"
+          - name: NUM_PARTITIONS
+            value: "1"
+          - name: SEPARATE_TOPICS
+            value: "true"
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "100m"
+            limits:
+              memory: "4Gi"
+              cpu: "500m"
+          command:
+            - bash
+          args:
+            - -c
+            - /nexmark-bench/bin/nexmark-server --max-events=100000 --num-event-generators=3
+      restartPolicy: OnFailure
