@@ -61,7 +61,7 @@ services:
       - init_topic
   
   flink-jobmanager:
-    image: flink:1.16.0-scala_2.12-java11
+    image: flink:1.18.1-scala_2.12-java8
     ports:
       - "8081:8081"
     command: jobmanager
@@ -76,7 +76,7 @@ services:
           memory: '2G'       
 
   flink-taskmanager:
-    image: flink:1.16.0-scala_2.12-java11
+    image: flink:1.18.1-scala_2.12-java8
     depends_on:
       - flink-jobmanager
     command: taskmanager
@@ -95,7 +95,7 @@ services:
           memory: '4G'       
 
   flink-sql:
-    image: timeplus/flinksql:456bb6f  
+    image: timeplus/flinksql:9c341db_1.18 
     ports:
       - "8080:8080"
 
