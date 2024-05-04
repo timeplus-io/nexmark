@@ -23,7 +23,7 @@ def init(data_size, event_rate):
 def start_kafka():
     # Define container configuration
     container_config = {
-        'image': 'docker.redpanda.com/redpandadata/redpanda:v23.1.3',
+        'image': 'docker.redpanda.com/redpandadata/redpanda:v23.3.14',
         'name': 'kafka',
         'command': [
             'redpanda', 'start',
@@ -83,8 +83,9 @@ def init_kafka_topic(topics):
        command.append(topic)
 
     init_topic_config = {
-        'image': 'docker.redpanda.com/redpandadata/redpanda:v23.3.11',
+        'image': 'docker.redpanda.com/redpandadata/redpanda:v23.3.14',
         'command':command,
+        'name': 'init_kafka_topic',
         'network': network_name,
         'detach': False, # blocked until it stops
         'auto_remove': True
@@ -103,8 +104,9 @@ def delete_kafka_topic(topics):
        command.append(topic)
 
     delete_topic_config = {
-        'image': 'docker.redpanda.com/redpandadata/redpanda:v23.3.11',
+        'image': 'docker.redpanda.com/redpandadata/redpanda:v23.3.14',
         'command':command,
+        'name': 'delete_kafka_topic',
         'network': network_name,
         'detach': False, # blocked until it stops
         'auto_remove': True
@@ -122,6 +124,7 @@ def generate_data(data_size=10000000, event_rate=300000):
             '--num-event-generators=3',
             f'--event-rate={event_rate}'
         ],
+        'name': 'generate_data',
         'environment': {
             'KAFKA_HOST': 'kafka:9092',
             'AUCTION_TOPIC': 'nexmark-auction',
@@ -143,7 +146,7 @@ def start_flink():
     cpu_quota = 12 * 100000  # CPU quota in microseconds (equivalent to 1 core out of 12 cores)
 
     flink_jobmanager_config = {
-        'image': 'flink:1.16.0-scala_2.12-java11',
+        'image': 'flink:1.18.1-scala_2.12-java8',
         'ports': {'8081/tcp': 8081},
         'name': 'flink-jobmanager',
         'command': 'jobmanager',
@@ -163,7 +166,7 @@ def start_flink():
     print("flink jobmanager container started:", flink_jobmanager_container.id)
 
     flink_taskmanager_config = {
-        'image': 'flink:1.16.0-scala_2.12-java11',
+        'image': 'flink:1.18.1-scala_2.12-java8',
         'name': 'flink-taskmanager',
         'command': 'taskmanager',
         'environment': [
@@ -202,7 +205,8 @@ def start_flink():
 
 def run_flink_query(case):
     flink_sql_config = {
-        'image': 'timeplus/flinksql:456bb6f',
+        'image': 'timeplus/flinksql:9c341db_1.18',
+        'name': 'run_flink_query',
         'entrypoint': [
             '/opt/flink/bin/sql-client.sh',
             'embedded',
