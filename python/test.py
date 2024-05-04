@@ -35,7 +35,7 @@ def start_kafka():
             '--rpc-addr', 'kafka:33145',
             '--advertise-rpc-addr', 'kafka:33145',
             '--smp', '1',
-            '--memory', '1G',
+            '--memory', '4G',
             '--mode', 'dev-container',
             '--default-log-level=debug'
         ],
