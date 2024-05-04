@@ -140,7 +140,7 @@ def generate_data(data_size=10000000, event_rate=300000):
 
 def start_flink():
     cpu_period = 100000  # CPU period in microseconds (e.g., 100ms)
-    cpu_quota = 16 * 4 * cpu_period  # CPU quota in microseconds (equivalent to 4 core out of 16 cores)
+    cpu_quota = 4 * cpu_period  # CPU quota in microseconds (equivalent to 4 core out of 16 cores)
 
     flink_jobmanager_config = {
         'image': 'flink:1.16.0-scala_2.12-java11',
@@ -223,7 +223,7 @@ def run_flink_query(case):
 
 def start_proton():
     cpu_period = 100000  # CPU period in microseconds (e.g., 100ms)
-    cpu_quota = 16 * 4 * cpu_period  # CPU quota in microseconds (equivalent to 1 core out of 12 cores)
+    cpu_quota = 4 * cpu_period  # CPU quota in microseconds (equivalent to 1 core out of 12 cores)
 
     proton_config = {
         'image': 'ghcr.io/timeplus-io/proton:latest',
@@ -272,7 +272,7 @@ def run_proton_query(case, proton_container):
 
 def start_ksqldb():
     cpu_period = 100000  # CPU period in microseconds (e.g., 100ms)
-    cpu_quota = 16 * 4 * cpu_period  # CPU quota in microseconds (equivalent to 1 core out of 12 cores)
+    cpu_quota = 4 * cpu_period  # CPU quota in microseconds (equivalent to 1 core out of 12 cores)
 
     ksqldb_config = {
         'image': 'confluentinc/ksqldb-server:0.29.0',
