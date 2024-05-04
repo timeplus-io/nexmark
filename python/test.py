@@ -169,7 +169,7 @@ def start_flink():
         'environment': [
             'FLINK_PROPERTIES=jobmanager.rpc.address: flink-jobmanager\ntaskmanager.numberOfTaskSlots: 1\ntaskmanager.memory.flink.size: 3g\ntaskmanager.memory.process.size: 4g'
         ],
-        'mem_limit': '4g',
+        'mem_limit': '16g',
         'cpu_period': cpu_period,
         'cpu_quota':cpu_quota,
         'network': network_name,
@@ -233,7 +233,7 @@ def start_proton():
             '8463/tcp':8463 # TCP Streaming
         },
         'name': 'proton',
-        'mem_limit': '4g',
+        'mem_limit': '16g',
         'cpu_period': cpu_period,
         'cpu_quota':cpu_quota,
         'network': network_name,
@@ -278,7 +278,7 @@ def start_ksqldb():
         'image': 'confluentinc/ksqldb-server:0.29.0',
         'ports': {'8088/tcp': 8088},
         'name': 'ksqldb',
-        'mem_limit': '4g',
+        'mem_limit': '16g',
         'cpu_period': cpu_period,
         'cpu_quota':cpu_quota,
         'network': network_name,
