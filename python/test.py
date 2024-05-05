@@ -356,8 +356,7 @@ def cleanup(containers):
     print("test resources have been cleaned up")
 
 def shutdown(containers):
-    for container in containers:
-        container.stop()
+    cleanup(containers)
     client.networks.prune()
     print("test stack have been showdown")
 
