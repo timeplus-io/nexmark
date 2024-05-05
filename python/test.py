@@ -1,17 +1,69 @@
 import os
 import time
+import csv
+import threading
+import json
 import docker
 import requests
 import click
-import csv
 
 from datetime import datetime
 from kafka import KafkaConsumer
 
 network_name = "network_nexmark"
 kafka_timeout = 5 # timeout of reading data from kafka
+cpu_period = 100000  # CPU period in microseconds (e.g., 100ms)
+cpu_quota = 12 * 100000  # CPU quota in microseconds (equivalent to 1 core out of 12 cores)
+
 current_path = os.getcwd()
 client = docker.from_env()
+
+class ContainerStatsCollector:
+    def __init__(self, docker_client, case):
+        self.docker_client = docker_client
+        self.container_stats = []
+        self.collecting_thread = None
+        self.stop_event = threading.Event()
+        self.case = case
+
+    def start_collection(self):
+        # Define the target function that will run in a separate thread
+        def collect_stats():
+            while not self.stop_event.is_set():
+                try:
+                    # Retrieve stats for all containers
+                    for container in self.docker_client.containers.list():
+                        stats = container.stats(stream=False)
+                        stats['time'] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f%z")
+                        stats['case'] = self.case
+                        self.container_stats.append(stats)                    
+                    time.sleep(1)  # Adjust sleep interval as needed
+                except Exception as e:
+                    print(f"Error collecting stats: {e}")
+
+        # Create a new thread to collect stats
+        self.collecting_thread = threading.Thread(target=collect_stats)
+        self.collecting_thread.start()
+
+    def stop_collection(self):
+        # Signal the collection thread to stop
+        self.stop_event.set()
+        # Wait for the thread to complete
+        if self.collecting_thread:
+            self.collecting_thread.join()
+
+    def get_collected_stats(self):
+        # Return the collected stats (call this from the main thread)
+        return self.container_stats
+
+def add_stats_report(stats, reports_file_path):
+    with open(reports_file_path, 'a') as file:
+        for json_obj in stats:
+            json_str = json.dumps(json_obj)
+            file.write(json_str + '\n')
+        file.flush()
+
+
 
 def init(data_size, event_rate):
     client.networks.create(network_name, driver="bridge")
@@ -112,8 +164,11 @@ def delete_kafka_topic(topics):
         'auto_remove': True
     }
 
-    client.containers.run(**delete_topic_config)
-    print(f"kafka topic {topics} deleted")
+    try:
+        client.containers.run(**delete_topic_config)
+        print(f"kafka topic {topics} deleted")
+    except:
+        print(f"kafka topic {topics} delete failed")
 
 def generate_data(data_size=10000000, event_rate=300000):
     print(f'generating test data with size {data_size} and rate {event_rate}')
@@ -142,9 +197,6 @@ def generate_data(data_size=10000000, event_rate=300000):
     print("data generation completed")
 
 def start_flink():
-    cpu_period = 100000  # CPU period in microseconds (e.g., 100ms)
-    cpu_quota = 12 * 100000  # CPU quota in microseconds (equivalent to 1 core out of 12 cores)
-
     flink_jobmanager_config = {
         'image': 'flink:1.18.1-scala_2.12-java8',
         'ports': {'8081/tcp': 8081},
@@ -226,9 +278,6 @@ def run_flink_query(case):
     print(f"flink sql {case}.sql done.")
 
 def start_proton():
-    cpu_period = 100000  # CPU period in microseconds (e.g., 100ms)
-    cpu_quota = 12 * 100000  # CPU quota in microseconds (equivalent to 1 core out of 12 cores)
-
     proton_config = {
         'image': 'ghcr.io/timeplus-io/proton:latest',
         'ports': {
@@ -275,9 +324,6 @@ def run_proton_query(case, proton_container):
     print(f"proton sql {case}.sql done. {exit_code} {output}")
 
 def start_ksqldb():
-    cpu_period = 100000  # CPU period in microseconds (e.g., 100ms)
-    cpu_quota = 12 * 100000  # CPU quota in microseconds (equivalent to 1 core out of 12 cores)
-
     ksqldb_config = {
         'image': 'confluentinc/ksqldb-server:0.29.0',
         'ports': {'8088/tcp': 8088},
@@ -361,6 +407,9 @@ def shutdown(containers):
     print("test stack have been showdown")
 
 def test_flink(case):
+    collector = ContainerStatsCollector(docker_client=client, case=case)
+    collector.start_collection()
+
     init_kafka_topic([f'nexmark_{case}'.upper()])
     flink_jobmanager_container, flink_taskmanager_container = start_flink()
     start_time = time.time()
@@ -371,9 +420,14 @@ def test_flink(case):
     print(f"flink {case} takes time: {elapsed_time:.6f} seconds")
     cleanup([flink_jobmanager_container,flink_taskmanager_container])
     delete_kafka_topic([f'nexmark_{case}'.upper()])
-    return elapsed_time, size
+
+    collector.stop_collection()
+    collected_stats = collector.get_collected_stats()
+    return elapsed_time, size, collected_stats
 
 def test_proton(case):
+    collector = ContainerStatsCollector(docker_client=client, case=case)
+    collector.start_collection()
     init_kafka_topic([f'nexmark_{case}'.upper()])
     proton_container = start_proton()
     start_time = time.time()
@@ -384,9 +438,13 @@ def test_proton(case):
     print(f"proton {case} takes time: {elapsed_time:.6f} seconds")
     cleanup([proton_container])
     delete_kafka_topic([f'nexmark_{case}'.upper()])
-    return elapsed_time, size
+    collector.stop_collection()
+    collected_stats = collector.get_collected_stats()
+    return elapsed_time, size, collected_stats
 
 def test_ksqldb(case):
+    collector = ContainerStatsCollector(docker_client=client, case=case)
+    collector.start_collection()
     init_kafka_topic([f'nexmark_{case}'.upper()])
     ksqldb_container = start_ksqldb()
     start_time = time.time()
@@ -397,11 +455,10 @@ def test_ksqldb(case):
     print(f"ksqldb {case} takes time: {elapsed_time:.6f} seconds")
     cleanup([ksqldb_container])
     delete_kafka_topic([f'nexmark_{case}'.upper()])
-    try:
-        delete_kafka_topic(['processing_stream'.upper()])
-    except:
-        pass
-    return elapsed_time, size
+    delete_kafka_topic(['processing_stream'.upper()])
+    collector.stop_collection()
+    collected_stats = collector.get_collected_stats()
+    return elapsed_time, size, collected_stats
 
 
 def test_one(case):
@@ -434,37 +491,42 @@ def main(cases, targets, size, rate):
     
     platforms = targets.split(',')
     result = []
+    now = datetime.now()
+    stats_report_path = f'stats_report{now.strftime("%m%d%Y%H%M%S")}.json'
     
     for case in cases.split(','):
         kafka_container = init(data_size=size, event_rate=rate)
         print(f'run case {case}')
         if 'flink' in platforms:
-            flink_result_time, flink_result_size = test_flink(case)
+            flink_result_time, flink_result_size, stats = test_flink(case)
             result.append({
                 "case":case, 
                 "platform":'flink', 
                 "time": flink_result_time, 
                 "size": flink_result_size})
+            add_stats_report(stats,stats_report_path)
         if 'proton' in platforms:
-            proton_result_time,  proton_result_size= test_proton(case)
+            proton_result_time,  proton_result_size, stats= test_proton(case)
             result.append({
                 "case":case, 
                 "platform":'proton', 
                 "time": proton_result_time, 
                 "size": proton_result_size})
+            add_stats_report(stats,stats_report_path)
 
         if 'ksqldb' in platforms:
-            ksqldb_result_time,  ksqldb_result_size = test_ksqldb(case)
+            ksqldb_result_time,  ksqldb_result_size, stats= test_ksqldb(case)
             result.append({
                 "case":case, 
                 "platform":'ksqldb', 
                 "time": ksqldb_result_time, 
                 "size": ksqldb_result_size})
+            add_stats_report(stats,stats_report_path)
+
         shutdown([kafka_container])
         
     print(f"test result is {result}")
     keys = result[0].keys()
-    now = datetime.now()
     fname = f'report{now.strftime("%m%d%Y%H%M%S")}.csv'
     with open(fname, 'w', newline='') as output_file:
         dict_writer = csv.DictWriter(output_file, keys)
