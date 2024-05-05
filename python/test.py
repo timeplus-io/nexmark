@@ -429,7 +429,7 @@ def test(cases):
 @click.command()
 @click.option('--cases', default='base', help='cases to run, default to base')
 @click.option('--targets', default='flink,proton,ksqldb', help='target platforms, default to flink,proton,ksqldb')
-@click.option('--size', default=1000000, help='test data volume, default to 1000000')
+@click.option('--size', default=10000000, help='test data volume, default to 10000000')
 @click.option('--rate', default=300000, help='test data generation rate, default to 300000')
 def main(cases, targets, size, rate):
     
