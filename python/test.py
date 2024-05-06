@@ -13,7 +13,7 @@ from kafka import KafkaConsumer
 network_name = "network_nexmark"
 kafka_timeout = 5 # timeout of reading data from kafka
 cpu_period = 100000  # CPU period in microseconds (e.g., 100ms)
-cpu_quota = 12 * 100000  # CPU quota in microseconds (equivalent to 1 core out of 12 cores)
+cpu_quota = 2 * 100000  # CPU quota in microseconds (equivalent to 1 core out of 12 cores)
 
 current_path = os.getcwd()
 client = docker.from_env()
