@@ -33,11 +33,13 @@ class ContainerStatsCollector:
                 try:
                     # Retrieve stats for all containers
                     for container in self.docker_client.containers.list():
-                        stats = container.stats(stream=False)
-                        stats['time'] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f%z")
-                        stats['case'] = self.case
-                        self.container_stats.append(stats)                    
-                    time.sleep(1)  # Adjust sleep interval as needed
+                        try:
+                            stats = container.stats(stream=False)
+                            stats['time'] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f%z")
+                            stats['case'] = self.case
+                            self.container_stats.append(stats)       
+                        finally:
+                            time.sleep(1)  # Adjust sleep interval as needed
                 except Exception as e:
                     print(f"Error collecting stats: {e}")
 
