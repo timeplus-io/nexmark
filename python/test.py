@@ -492,7 +492,7 @@ def main(cases, targets, size, rate):
     platforms = targets.split(',')
     result = []
     now = datetime.now()
-    stats_report_path = f'stats_report{now.strftime("%m%d%Y%H%M%S")}.json'
+    stats_report_path = f'stats_report{now.strftime("%Y%m%d%H%M%S")}.json'
     
     for case in cases.split(','):
         kafka_container = init(data_size=size, event_rate=rate)
@@ -527,7 +527,7 @@ def main(cases, targets, size, rate):
         
     print(f"test result is {result}")
     keys = result[0].keys()
-    fname = f'report{now.strftime("%m%d%Y%H%M%S")}.csv'
+    fname = f'report{now.strftime("%Y%m%d%H%M%S")}.csv'
     with open(fname, 'w', newline='') as output_file:
         dict_writer = csv.DictWriter(output_file, keys)
         dict_writer.writeheader()
