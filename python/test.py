@@ -396,9 +396,15 @@ def read_from_kafka(case):
 
 def cleanup(containers):
     for container in containers:
-        container.stop()
-    client.containers.prune()
-    client.volumes.prune()
+        try:
+            container.stop()
+        except:
+            pass
+    try:
+        client.containers.prune()
+        client.volumes.prune()
+    except:
+        pass
     print("test resources have been cleaned up")
 
 def shutdown(containers):
