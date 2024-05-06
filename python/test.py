@@ -426,11 +426,11 @@ def test_flink(case):
     end_time = time.time()
     elapsed_time = end_time - start_time - kafka_timeout
     print(f"flink {case} takes time: {elapsed_time:.6f} seconds")
-    cleanup([flink_jobmanager_container,flink_taskmanager_container])
-    delete_kafka_topic([f'nexmark_{case}'.upper()])
-
     collector.stop_collection()
     collected_stats = collector.get_collected_stats()
+    
+    cleanup([flink_jobmanager_container,flink_taskmanager_container])
+    delete_kafka_topic([f'nexmark_{case}'.upper()])
     return elapsed_time, size, collected_stats
 
 def test_proton(case):
@@ -444,10 +444,11 @@ def test_proton(case):
     end_time = time.time()
     elapsed_time = end_time - start_time - kafka_timeout
     print(f"proton {case} takes time: {elapsed_time:.6f} seconds")
-    cleanup([proton_container])
-    delete_kafka_topic([f'nexmark_{case}'.upper()])
+    
     collector.stop_collection()
     collected_stats = collector.get_collected_stats()
+    cleanup([proton_container])
+    delete_kafka_topic([f'nexmark_{case}'.upper()])
     return elapsed_time, size, collected_stats
 
 def test_ksqldb(case):
@@ -461,11 +462,12 @@ def test_ksqldb(case):
     end_time = time.time()
     elapsed_time = end_time - start_time - kafka_timeout
     print(f"ksqldb {case} takes time: {elapsed_time:.6f} seconds")
+    collector.stop_collection()
+    collected_stats = collector.get_collected_stats()
+
     cleanup([ksqldb_container])
     delete_kafka_topic([f'nexmark_{case}'.upper()])
     delete_kafka_topic(['processing_stream'.upper()])
-    collector.stop_collection()
-    collected_stats = collector.get_collected_stats()
     return elapsed_time, size, collected_stats
 
 
