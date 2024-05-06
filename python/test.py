@@ -428,7 +428,7 @@ def test_flink(case):
     print(f"flink {case} takes time: {elapsed_time:.6f} seconds")
     collector.stop_collection()
     collected_stats = collector.get_collected_stats()
-    
+
     cleanup([flink_jobmanager_container,flink_taskmanager_container])
     delete_kafka_topic([f'nexmark_{case}'.upper()])
     return elapsed_time, size, collected_stats
@@ -452,6 +452,9 @@ def test_proton(case):
     return elapsed_time, size, collected_stats
 
 def test_ksqldb(case):
+    if case in ['q5','q7','q8','q9','q15','q16','q17','q18','q19']:
+        return 0,0,[{"case":case}]
+
     collector = ContainerStatsCollector(docker_client=client, case=case)
     collector.start_collection()
     init_kafka_topic([f'nexmark_{case}'.upper()])
@@ -464,7 +467,6 @@ def test_ksqldb(case):
     print(f"ksqldb {case} takes time: {elapsed_time:.6f} seconds")
     collector.stop_collection()
     collected_stats = collector.get_collected_stats()
-
     cleanup([ksqldb_container])
     delete_kafka_topic([f'nexmark_{case}'.upper()])
     delete_kafka_topic(['processing_stream'.upper()])
