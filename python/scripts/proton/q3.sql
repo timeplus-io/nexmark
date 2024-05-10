@@ -58,5 +58,3 @@ CREATE MATERIALIZED VIEW mv INTO target AS
     WHERE
         A.category = 14 and (P.state = 'or' OR P.state = 'wy' OR P.state = 'ca')
     SETTINGS seek_to = 'earliest';
-
-
