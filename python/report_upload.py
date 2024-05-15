@@ -1,5 +1,6 @@
 import os
 import csv
+import time
 import click
 from timeplus import Stream, Environment
 
@@ -38,7 +39,11 @@ def main(report_time):
         for line in file:
             # Load each line as a JSON object
             row = line.strip()
-            stats_stream.ingest(["raw","report_time"], [[row, report_time]])
+            try:
+                stats_stream.ingest(["raw","report_time"], [[row, report_time]])
+                time.sleep(1)
+            except e:
+                print(f'failed to ingest {e}')
 
     try:
         # create a new result stream
