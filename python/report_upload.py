@@ -41,10 +41,10 @@ def main(report_time):
             # Load each line as a JSON object
             row = line.strip()
             batch.append([row, report_time])
-            if len(batch) == 10:
+            if len(batch) == 100:
                 try:
                     stats_stream.ingest(["raw","report_time"], batch)
-                    time.sleep(0.1)
+                    time.sleep(0.5)
                 except Exception as e:
                     print(f'failed to ingest {e}')
                 finally:
