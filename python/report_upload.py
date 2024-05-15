@@ -10,7 +10,8 @@ env = Environment().address(api_address).apikey(api_key)
 
 @click.command()
 @click.option('--report_time', help='the time of the report to be uploaded')
-def main(report_time):
+@click.option('--init_stream', default=False, help='the time of the report to be uploaded')
+def main(report_time, init_stream):
     report_file_name = f'stats_report{report_time}.json'
     result_file_name = f'report{report_time}.csv'
     stats_stream_name = 'benchmark_stats_report'
@@ -19,22 +20,50 @@ def main(report_time):
     stats_stream = None
     result_stream = None
 
-    try:
-        # create a new stats stream
-        stats_stream = (
-            Stream(env=env)
-            .name(stats_stream_name)
-            .column("raw", "string")
-            .column("report_time", "string")
-            .create()
-        )
-    except Exception as e:
-        stats_stream = (Stream(env=env)
-            .name(stats_stream_name)
-            .column("raw", "string")
-            .column("report_time", "string")
-        )
+    if init_stream:
+        try:
+            # create a new stats stream
+            stats_stream = (
+                Stream(env=env)
+                .name(stats_stream_name)
+                .column("raw", "string")
+                .column("report_time", "string")
+                .create()
+            )
+        except Exception as e:
+            print(f'faile to create stream {e}')
+            exit(1)
 
+        try:  # create a new result stream
+            result_stream = (
+                Stream(env=env)
+                .name(result_stream_name)
+                .column("report_time", "string")
+                .column("case", "string")
+                .column("platform", "string")
+                .column("time", "float64")
+                .column("size", "int")
+                .create()
+            )
+        except Exception as e:
+            print(f'faile to create stream {e}')
+            exit(1)
+    else:
+        stats_stream = (Stream(env=env)
+                .name(stats_stream_name)
+                .column("raw", "string")
+                .column("report_time", "string")
+            )
+        result_stream = (
+                Stream(env=env)
+                .name(result_stream_name)
+                .column("report_time", "string")
+                .column("case", "string")
+                .column("platform", "string")
+                .column("time", "float64")
+                .column("size", "int")
+            )
+        
     with open(report_file_name, 'r') as file:
         batch = []
         for line in file:
@@ -49,29 +78,6 @@ def main(report_time):
                     print(f'failed to ingest {e}')
                 finally:
                     batch = []
-
-    try:
-        # create a new result stream
-        result_stream = (
-            Stream(env=env)
-            .name(result_stream_name)
-            .column("report_time", "string")
-            .column("case", "string")
-            .column("platform", "string")
-            .column("time", "float64")
-            .column("size", "int")
-            .create()
-        )
-    except Exception as e:
-        result_stream = (
-            Stream(env=env)
-            .name(result_stream_name)
-            .column("report_time", "string")
-            .column("case", "string")
-            .column("platform", "string")
-            .column("time", "float64")
-            .column("size", "int")
-        )
 
     with open(result_file_name, newline='') as csvfile:
         result_reader = csv.reader(csvfile)
