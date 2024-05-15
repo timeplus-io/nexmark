@@ -36,14 +36,19 @@ def main(report_time):
         )
 
     with open(report_file_name, 'r') as file:
+        batch = []
         for line in file:
             # Load each line as a JSON object
             row = line.strip()
-            try:
-                stats_stream.ingest(["raw","report_time"], [[row, report_time]])
-                time.sleep(0.1)
-            except e:
-                print(f'failed to ingest {e}')
+            batch.append([row, report_time])
+            if len(batch) == 100:
+                try:
+                    stats_stream.ingest(["raw","report_time"], batch)
+                    time.sleep(0.1)
+                except e:
+                    print(f'failed to ingest {e}')
+                finally:
+                    batch = []
 
     try:
         # create a new result stream
