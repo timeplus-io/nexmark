@@ -41,7 +41,7 @@ def main(report_time):
             row = line.strip()
             try:
                 stats_stream.ingest(["raw","report_time"], [[row, report_time]])
-                time.sleep(1)
+                time.sleep(0.1)
             except e:
                 print(f'failed to ingest {e}')
 
