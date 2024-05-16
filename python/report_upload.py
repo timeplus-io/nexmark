@@ -10,7 +10,7 @@ env = Environment().address(api_address).apikey(api_key)
 
 @click.command()
 @click.option('--report_time', help='the time of the report to be uploaded')
-@click.option('--init_stream', default=False, help='the time of the report to be uploaded')
+@click.option('--init_stream', default=False, help='whether to initialize the stream, default to false')
 def main(report_time, init_stream):
     report_file_name = f'stats_report{report_time}.json'
     result_file_name = f'report{report_time}.csv'
