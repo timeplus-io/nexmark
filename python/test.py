@@ -281,7 +281,7 @@ def run_flink_query(case):
 
 def start_proton():
     proton_config = {
-        'image': 'ghcr.io/timeplus-io/proton:latest',
+        'image': 'timeplus/timeplusd:latest',
         'ports': {
             '3218/tcp': 3218, # HTTP Streaming
             '8123/tcp': 8123, # HTTP Snapshot
@@ -317,13 +317,23 @@ def start_proton():
     return proton_container
 
 def run_proton_query(case, proton_container):
-    exit_code, output = proton_container.exec_run(['proton-client',
-        '-h',
-        'proton',
+    cmd = [
+        'timeplusd',
+        'client',
         '--multiquery',
         '--queries-file',
-        f'/home/scripts/{case}.sql'])
+        f'/home/scripts/{case}.sql'
+    ]
+    exit_code, output = proton_container.exec_run(cmd)
     print(f"proton sql {case}.sql done. {exit_code} {output}")
+#def run_proton_query(case, proton_container):
+#    exit_code, output = proton_container.exec_run(['timeplusd',
+#        '-h',
+#        'timeplusd client',
+#        '--multiquery',
+#        '--queries-file',
+#        f'/home/scripts/{case}.sql'])
+#    print(f"proton sql {case}.sql done. {exit_code} {output}")
 
 def start_ksqldb():
     ksqldb_config = {
