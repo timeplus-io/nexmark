@@ -7,4 +7,4 @@ CREATE EXTERNAL STREAM target(
              data_format='JSONEachRow',
              one_message_per_row=true;
 
-INSERT INTO target (id,message) VALUES (1, 'Hello streaming!');
+INSERT INTO target (id, message) VALUES (1, 'Hello streaming!');
