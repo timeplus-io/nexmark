@@ -39,7 +39,7 @@ class PerformanceConfig:
     flink_taskmanager_memory: str = "4g"
     flink_taskmanager_flink_memory: str = "3g"
     flink_taskmanager_process_memory: str = "4g"
-    proton_memory: str = "4g"
+    timeplus_memory: str = "4g"
     ksqldb_memory: str = "4g"
     
     # Kafka settings
@@ -569,11 +569,11 @@ class NexmarkBenchmark:
             except Exception as e:
                 logger.warning(f"Failed to cleanup topic for Flink test: {e}")
 
-    def test_proton(self, case: str) -> TestResult:
-        """Test Proton platform"""
-        logger.info(f"Testing Proton with case: {case}")
+    def test_timeplus(self, case: str) -> TestResult:
+        """Test Timeplus platform"""
+        logger.info(f"Testing Timeplus with case: {case}")
         
-        collector = ContainerStatsCollector(self.client, f"proton_{case}", self.config)
+        collector = ContainerStatsCollector(self.client, f"timeplus_{case}", self.config)
         
         try:
             collector.start_collection()
@@ -582,12 +582,12 @@ class NexmarkBenchmark:
             case_topic = f'nexmark_{case}'.upper()
             self._init_kafka_topics([case_topic])
             
-            # Start Proton
-            proton_container = self._start_proton()
+            # Start Timeplus
+            timeplus_container = self._start_timeplus()
             
             # Run query and measure time
             start_time = time.time()
-            self._run_proton_query(case, proton_container)
+            self._run_timeplus_query(case, timeplus_container)
             size = self._read_from_kafka(case)
             end_time = time.time()
             
@@ -597,17 +597,17 @@ class NexmarkBenchmark:
             
             return TestResult(
                 case=case,
-                platform='proton',
+                platform='timeplus',
                 execution_time=elapsed_time,
                 output_size=size,
                 stats=stats
             )
             
         except Exception as e:
-            logger.error(f"Proton test failed for case {case}: {e}")
+            logger.error(f"Timeplus test failed for case {case}: {e}")
             return TestResult(
                 case=case,
-                platform='proton',
+                platform='timeplus',
                 execution_time=0,
                 output_size=0,
                 error=str(e)
@@ -619,7 +619,7 @@ class NexmarkBenchmark:
                 case_topic = f'nexmark_{case}'.upper()
                 self._delete_kafka_topics([case_topic])
             except Exception as e:
-                logger.warning(f"Failed to cleanup topic for Proton test: {e}")
+                logger.warning(f"Failed to cleanup topic for Timeplus test: {e}")
 
     def test_ksqldb(self, case: str) -> TestResult:
         """Test KsqlDB platform"""
@@ -777,9 +777,9 @@ class NexmarkBenchmark:
             logger.error(f"Flink query failed: {e}")
             raise NexmarkTestError(f"Flink query execution failed: {e}")
 
-    def _start_proton(self) -> docker.models.containers.Container:
-        """Start Proton container"""
-        logger.info("Starting Proton container...")
+    def _start_timeplus(self) -> docker.models.containers.Container:
+        """Start Timeplus container"""
+        logger.info("Starting Timeplus container...")
         
         config = {
             'image': self.config.timeplusd_image,
@@ -788,14 +788,14 @@ class NexmarkBenchmark:
                 '8123/tcp': 8123,  # HTTP Snapshot
                 '8463/tcp': 8463   # TCP Streaming
             },
-            'name': 'proton',
-            'mem_limit': self.config.proton_memory,
+            'name': 'timeplus',
+            'mem_limit': self.config.timeplus_memory,
             'cpu_period': self.config.cpu_period,
             'cpu_quota': self.config.cpu_quota,
             'network': self.network_name,
-            'volumes': {f'{self.current_path}/scripts/proton': {'bind': '/home/scripts', 'mode': 'rw'}},
+            'volumes': {f'{self.current_path}/scripts/timeplus': {'bind': '/home/scripts', 'mode': 'rw'}},
             'healthcheck': {
-                'test': ["CMD", "curl", "http://localhost:3218/proton/ping"],
+                'test': ["CMD", "curl", "http://localhost:3218/timeplus/ping"],
                 'interval': 2 * 1000000000,
                 'timeout': self.config.health_check_timeout * 1000000000,
                 'retries': self.config.health_check_retries,
@@ -808,13 +808,13 @@ class NexmarkBenchmark:
         container = self.container_manager.create_container(**config)
         
         if not self.wait_for_health(container):
-            raise NexmarkTestError("Proton container failed to become healthy")
+            raise NexmarkTestError("Timeplus container failed to become healthy")
         
         return container
 
-    def _run_proton_query(self, case: str, proton_container: docker.models.containers.Container):
-        """Run Proton query"""
-        logger.info(f"Running Proton query for case: {case}")
+    def _run_timeplus_query(self, case: str, timeplus_container: docker.models.containers.Container):
+        """Run Timeplus query"""
+        logger.info(f"Running Timeplus query for case: {case}")
         
         cmd = [
             'timeplusd',
@@ -825,13 +825,13 @@ class NexmarkBenchmark:
         ]
         
         try:
-            exit_code, output = proton_container.exec_run(cmd)
+            exit_code, output = timeplus_container.exec_run(cmd)
             if exit_code != 0:
-                raise NexmarkTestError(f"Proton query failed with exit code {exit_code}: {output}")
-            logger.info(f"Proton query {case}.sql completed successfully")
+                raise NexmarkTestError(f"Timeplus query failed with exit code {exit_code}: {output}")
+            logger.info(f"Timeplus query {case}.sql completed successfully")
         except Exception as e:
-            logger.error(f"Proton query execution failed: {e}")
-            raise NexmarkTestError(f"Proton query execution failed: {e}")
+            logger.error(f"Timeplus query execution failed: {e}")
+            raise NexmarkTestError(f"Timeplus query execution failed: {e}")
 
     def _start_ksqldb(self) -> docker.models.containers.Container:
         """Start KsqlDB container"""
@@ -919,34 +919,6 @@ class NexmarkBenchmark:
         except Exception as e:
             logger.error(f"KsqlDB query execution failed: {e}")
             raise NexmarkTestError(f"KsqlDB query execution failed: {e}")
-        """Read results from Kafka topic"""
-        topic = f'nexmark_{case}'.upper()
-        logger.info(f"Reading from Kafka topic: {topic}")
-        
-        consumer = KafkaConsumer(
-            topic,
-            bootstrap_servers=self.config.kafka_bootstrap_servers,
-            auto_offset_reset='earliest',
-            enable_auto_commit=False,
-            consumer_timeout_ms=self.config.kafka_timeout * 1000
-        )
-        
-        try:
-            size = 0
-            while True:
-                message_batch = consumer.poll(timeout_ms=self.config.kafka_timeout * 1000)
-                if message_batch:
-                    for tp, messages in message_batch.items():
-                        size += len(messages)
-                else:
-                    logger.info(f"Read {size} messages from {topic}")
-                    break
-            return size
-        except Exception as e:
-            logger.error(f"Failed to read from Kafka: {e}")
-            return 0
-        finally:
-            consumer.close()
 
     def _read_from_kafka(self, case: str) -> int:
         """Read results from Kafka topic"""
@@ -1045,8 +1017,8 @@ class NexmarkBenchmark:
                         result = self.test_flink(case)
                         results.append(result)
                     
-                    if 'proton' in platforms:
-                        result = self.test_proton(case)
+                    if 'timeplus' in platforms:
+                        result = self.test_timeplus(case)
                         results.append(result)
                     
                     if 'ksqldb' in platforms:
@@ -1108,7 +1080,7 @@ def main(cases, platforms, data_size, event_rate, config_file, cpu_cores, memory
     config.cpu_quota_cores = cpu_cores
     config.flink_jobmanager_memory = memory_limit
     config.flink_taskmanager_memory = memory_limit
-    config.proton_memory = memory_limit
+    config.timeplus_memory = memory_limit
     config.ksqldb_memory = memory_limit
     
     # Parse input arguments
