@@ -42,8 +42,16 @@ ENGINE = ExternalStream
 SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-bid';
 
 CREATE EXTERNAL STREAM target(
-    auction  int64,
-    price  int64) 
+CREATE EXTERNAL STREAM target(
+    name string,
+    city string,
+    state string,
+    id int64)
+    SETTINGS type='kafka',
+             brokers='kafka:9092',
+             topic='NEXMARK_Q3',
+             data_format='JSONEachRow',
+             one_message_per_row=true;
     SETTINGS type='kafka', 
              brokers='kafka:9092', 
              topic='NEXMARK_Q3', 
