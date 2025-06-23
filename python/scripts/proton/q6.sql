@@ -53,7 +53,7 @@ CREATE EXTERNAL STREAM target(
 -- Average Selling Price by Seller
 CREATE MATERIALIZED VIEW mv INTO target AS 
   SELECT
-    seller, array_avg(concat([final], lags(final, 1, 9, 0))) OVER (PARTITION BY seller) as avg_sell_price
+    seller, array_avg(concat([final], lags(final, 1, 9, 0))) as avg_sell_price
   FROM
     (
       SELECT
@@ -66,5 +66,6 @@ CREATE MATERIALIZED VIEW mv INTO target AS
       GROUP BY
         A.id, A.seller, B.date_time
     )
+  PARTITION BY seller
   SETTINGS
     seek_to = 'earliest';
