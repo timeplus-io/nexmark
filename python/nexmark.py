@@ -43,15 +43,21 @@ class PerformanceConfig:
     ksqldb_memory: str = "4g"
     
     # Kafka settings
+    kafka_image: str = "docker.redpanda.com/redpandadata/redpanda:v23.1.3"
     kafka_timeout: int = 5  # timeout in seconds
     kafka_bootstrap_servers: str = "localhost:19092"
     kafka_partitions: int = 1
     
     # Flink settings
+    flink_image: str = "flink:1.18.1-scala_2.12-java8"
+    flink_cli_image: str = "timeplus/flinksql:9c341db_1.18"
     flink_taskmanager_slots: int = 1
     flink_port: int = 8081
     flink_health_check_interval: int = 5
     flink_max_health_checks: int = 20
+    
+    # Timeplus settings
+    timeplusd_image: str = "timeplus/timeplusd:latest"
     
     # Data generation settings
     default_data_size: int = 10000000
@@ -354,7 +360,7 @@ class NexmarkBenchmark:
         logger.info("Starting Kafka container...")
         
         container_config = {
-            'image': 'docker.redpanda.com/redpandadata/redpanda:v23.3.14',
+            'image': self.config.kafka_image,
             'name': 'kafka',
             'command': [
                 'redpanda', 'start',
@@ -686,7 +692,7 @@ class NexmarkBenchmark:
         
         # JobManager
         jm_config = {
-            'image': 'flink:1.18.1-scala_2.12-java8',
+            'image': self.config.flink_image,
             'ports': {f'{self.config.flink_port}/tcp': self.config.flink_port},
             'name': 'flink-jobmanager',
             'command': 'jobmanager',
@@ -705,7 +711,7 @@ class NexmarkBenchmark:
 
         # TaskManager
         tm_config = {
-            'image': 'flink:1.18.1-scala_2.12-java8',
+            'image': self.config.flink_image,
             'name': 'flink-taskmanager',
             'command': 'taskmanager',
             'environment': [
@@ -750,7 +756,7 @@ class NexmarkBenchmark:
         logger.info(f"Running Flink query for case: {case}")
         
         config = {
-            'image': 'timeplus/flinksql:9c341db_1.18',
+            'image': self.config.flink_cli_image,
             'name': 'run_flink_query',
             'entrypoint': [
                 '/opt/flink/bin/sql-client.sh',
@@ -776,7 +782,7 @@ class NexmarkBenchmark:
         logger.info("Starting Proton container...")
         
         config = {
-            'image': 'timeplus/timeplusd:latest',
+            'image': self.config.timeplusd_image,
             'ports': {
                 '3218/tcp': 3218,  # HTTP Streaming
                 '8123/tcp': 8123,  # HTTP Snapshot

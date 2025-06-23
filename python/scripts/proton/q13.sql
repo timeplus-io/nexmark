@@ -52,7 +52,7 @@ CREATE EXTERNAL STREAM target(
              data_format='JSONEachRow',
              one_message_per_row=true;
 
---  side input
+--  side input to be added
 CREATE MATERIALIZED VIEW mv INTO target AS 
   SELECT
     B.auction, B.bidder, B.price, B.dateTime, S.value
