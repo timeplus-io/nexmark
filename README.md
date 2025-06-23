@@ -183,11 +183,8 @@ The `ContainerManager` class provides:
 
 ### Common Issues
 
-1. **Docker Permission Errors**
-   ```bash
-   sudo usermod -aG docker $USER
-   # Logout and login again
-   ```
+1. **Platform support**
+   - all test runs on linux/amd, on other platforms and architecture, there might be issues.
 
 2. **Memory Issues**
    - Increase Docker memory limits
