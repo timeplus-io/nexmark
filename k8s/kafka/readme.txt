@@ -1,1 +1,0 @@
-assume kafka has already been installed
