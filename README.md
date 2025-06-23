@@ -20,7 +20,7 @@ The Nexmark benchmark is a suite of queries and data generators designed to eval
 The benchmark suite consists of:
 
 1. **Data Generator**: Generates auction, person, and bid events at configurable rates
-2. **Platform Orchestrators**: Manages Flink clusters, Proton instances, and ksqlDB servers
+2. **Platform Orchestrators**: Manages Flink clusters, Timeplus instances, and ksqlDB servers
 3. **Query Executor**: Runs SQL queries against each platform
 4. **Results Collector**: Gathers performance metrics and output validation
 5. **Statistics Monitor**: Tracks container resource usage during tests
@@ -55,7 +55,7 @@ pip install -r requirements.txt
 Run a basic benchmark test:
 
 ```bash
-python nexmark.py --cases q1,q2,q3 --platforms flink,proton --data-size 1000000 --event-rate 10000
+python nexmark.py --cases q1,q2,q3 --platforms flink,timeplus --data-size 1000000 --event-rate 10000
 ```
 
 ## Usage
@@ -71,7 +71,7 @@ python nexmark.py [OPTIONS]
 - `--cases`: Comma-separated list of test cases to run (default: 'base')
   - Available: base, q0, q1, q2, ..., q22
 - `--platforms`: Target platforms to test (default: 'flink')
-  - Available: flink, proton, ksqldb
+  - Available: flink, timeplus, ksqldb
 - `--data-size`: Number of events to generate (default: 10000000)
 - `--event-rate`: Events per second generation rate (default: 300000)
 - `--config-file`: Path to JSON configuration file
@@ -87,7 +87,7 @@ python nexmark.py --cases q1,q3,q5 --platforms flink --data-size 5000000
 
 Compare all platforms on a single query:
 ```bash
-python nexmark.py --cases q1 --platforms flink,proton,ksqldb --data-size 1000000
+python nexmark.py --cases q1 --platforms flink,timeplus,ksqldb --data-size 1000000
 ```
 
 Run with custom resource limits:
@@ -107,7 +107,7 @@ The tool supports extensive configuration through the `PerformanceConfig` class 
   "kafka_memory": "4G",
   "flink_jobmanager_memory": "2g",
   "flink_taskmanager_memory": "4g",
-  "proton_memory": "4g",
+  "timeplus_memory": "4g",
   "ksqldb_memory": "4g",
   "default_data_size": 10000000,
   "default_event_rate": 300000,
@@ -119,7 +119,7 @@ The tool supports extensive configuration through the `PerformanceConfig` class 
 
 ### Supported Queries by Platform
 
-| Query | Flink | Proton | ksqlDB | Description |
+| Query | Flink | timeplus | ksqlDB | Description |
 |-------|-------|--------|--------|-------------|
 | base  | ✅    | ✅     | ✅     | Basic connectivity test |
 | q0-q4 | ✅    | ✅     | ✅     | Simple aggregations |
@@ -140,7 +140,7 @@ The tool supports extensive configuration through the `PerformanceConfig` class 
 The tool generates timestamped CSV reports with the following columns:
 
 - `case`: Test case identifier (e.g., q1, q2)
-- `platform`: Streaming platform (flink, proton, ksqldb)
+- `platform`: Streaming platform (flink, timeplus, ksqldb)
 - `execution_time`: Query execution time in seconds
 - `output_size`: Number of result records
 - `error`: Error message if test failed
@@ -227,7 +227,7 @@ python/
 ├── requirements.txt    # Python dependencies
 ├── scripts/           # SQL query definitions
 │   ├── flink/         # Flink SQL queries
-│   ├── proton/        # Proton SQL queries
+│   ├── timeplus/      # timeplus SQL queries
 │   └── ksqldb/        # ksqlDB queries
 └── Makefile           # Build automation
 ```
