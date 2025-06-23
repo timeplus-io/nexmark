@@ -236,39 +236,6 @@ python/
 3. Ensure query outputs to topic: `NEXMARK_Q<NUMBER>`
 4. Test with single platform before multi-platform testing
 
-### Extending Platforms
-
-1. Implement platform-specific methods in `NexmarkBenchmark`
-2. Add container configuration and health checks
-3. Implement query execution logic
-4. Add platform to CLI options
-
-## Performance Tuning
-
-### Resource Optimization
-
-- **CPU**: Allocate sufficient cores for parallel processing
-- **Memory**: Balance between JVM heap and container limits
-- **Network**: Use appropriate Kafka partitioning
-- **Storage**: Consider SSD for better I/O performance
-
-### Scaling Recommendations
-
-- **Small Tests**: 1-2 CPU cores, 4GB RAM, 100K-1M events
-- **Medium Tests**: 4 CPU cores, 8GB RAM, 10M events
-- **Large Tests**: 8+ CPU cores, 16GB+ RAM, 100M+ events
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all platforms pass basic tests
-5. Submit a pull request
-
-## License
-
-[License information]
 
 ## References
 
