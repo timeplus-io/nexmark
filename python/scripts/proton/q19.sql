@@ -43,10 +43,12 @@ CREATE STREAM bid
 ENGINE = ExternalStream
 SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-bid';
 
+
 CREATE EXTERNAL STREAM target(
     auction int64,
-    top_10 array(tuple(string, uint64))) 
-    SETTINGS type='kafka', 
+    top_10 array(int64)
+)
+SETTINGS type='kafka', 
              brokers='kafka:9092', 
              topic='NEXMARK_Q19', 
              data_format='JSONEachRow',
