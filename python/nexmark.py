@@ -838,7 +838,7 @@ class NexmarkBenchmark:
             'name': 'ksqldb',
             'mem_limit': self.config.ksqldb_memory,
             'cpu_period': self.config.cpu_period,
-            'cpu_quota':self.config.cpu_quota,
+            'cpu_quota': self.config.cpu_quota,
             'network': self.network_name,
             'environment': {
                 'KSQL_BOOTSTRAP_SERVERS': 'kafka:9092',
@@ -862,12 +862,35 @@ class NexmarkBenchmark:
         logger.info(f"ksqldb container started: {ksqldb_container.id}")
 
         for i in range(100):
-            c = self.client.containers.get(ksqldb_container.id)
-            health_status = c.attrs['State']['Health']['Status']
-            logger.info("ksqldb container health status:", health_status)
-            if health_status == 'healthy':
+            try:
+                c = self.client.containers.get(ksqldb_container.id)
+                
+                # Check if container exited
+                if c.status in ['exited', 'dead']:
+                    logger.error(f"KsqlDB container has exited with status: {c.status}")
+                    exit_code = c.attrs['State'].get('ExitCode', 'unknown')
+                    logger.error(f"KsqlDB container exit code: {exit_code}")
+                    
+                    # Get the logs to see why it crashed
+                    try:
+                        logs = c.logs().decode('utf-8')
+                        logger.error(f"KsqlDB container logs:\n{logs}")
+                    except Exception as log_e:
+                        logger.warning(f"Could not retrieve logs: {log_e}")
+                    
+                    raise NexmarkTestError(f"KsqlDB container crashed with exit code: {exit_code}")
+                
+                health_status = c.attrs['State']['Health']['Status']
+                logger.info(f"ksqldb container health status: {health_status}")
+                if health_status == 'healthy':
+                    break
+                time.sleep(3)
+            except docker.errors.NotFound:
+                logger.error(f"KsqlDB container {ksqldb_container.id} was removed (likely crashed)")
+                raise NexmarkTestError("KsqlDB container was removed during startup")
+            except Exception as e:
+                logger.error(f"Error during ksqldb health check: {e}")
                 break
-            time.sleep(3)
         
         return ksqldb_container
 
