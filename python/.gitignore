@@ -2,3 +2,5 @@
 *.csv
 *.json
 env.sh
+*.log
+.DS_Store

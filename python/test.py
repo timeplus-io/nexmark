@@ -32,16 +32,31 @@ class ContainerStatsCollector:
             while not self.stop_event.is_set():
                 try:
                     # Retrieve stats for all containers
-                    for container in self.docker_client.containers.list():
+                    containers = self.docker_client.containers.list()
+                    
+                    for container in containers:
+                        if self.stop_event.is_set():  # Check if we should stop
+                            break
+                            
                         try:
                             stats = container.stats(stream=False)
                             stats['time'] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f%z")
                             stats['case'] = self.case
-                            self.container_stats.append(stats)       
-                        finally:
-                            time.sleep(1)  # Adjust sleep interval as needed
+                            self.container_stats.append(stats)
+                        except docker.errors.NotFound:
+                            print(f"Container {container.id[:12]} was removed during stats collection")
+                        except docker.errors.APIError as e:
+                            print(f"Docker API error for container {container.id[:12]}: {e}")
+                        except Exception as e:
+                            print(f"Unexpected error collecting stats for container {container.id[:12]}: {e}")
+                            
+                except docker.errors.APIError as e:
+                    print(f"Docker API error listing containers: {e}")
                 except Exception as e:
-                    print(f"Error collecting stats: {e}")
+                    print(f"Unexpected error in stats collection: {e}")
+                finally:
+                    # Sleep should be outside the container loop
+                    time.sleep(1)
 
         # Create a new thread to collect stats
         self.collecting_thread = threading.Thread(target=collect_stats)
@@ -326,14 +341,7 @@ def run_proton_query(case, proton_container):
     ]
     exit_code, output = proton_container.exec_run(cmd)
     print(f"proton sql {case}.sql done. {exit_code} {output}")
-#def run_proton_query(case, proton_container):
-#    exit_code, output = proton_container.exec_run(['timeplusd',
-#        '-h',
-#        'timeplusd client',
-#        '--multiquery',
-#        '--queries-file',
-#        f'/home/scripts/{case}.sql'])
-#    print(f"proton sql {case}.sql done. {exit_code} {output}")
+
 
 def start_ksqldb():
     ksqldb_config = {
@@ -386,6 +394,7 @@ def read_from_kafka(case):
         bootstrap_servers='localhost:19092',
         auto_offset_reset='earliest',
         enable_auto_commit=False)
+    
     try:
         size = 0
         while True:
@@ -395,11 +404,8 @@ def read_from_kafka(case):
                 for tp, messages in message_batch.items():
                     size += len(messages)
             else:
-                if size == 0:
-                    continue
-                else:
-                    print(f"total read {size}, no new messages. exiting...")
-                    break
+                print(f"total read {size}, no new messages. exiting...")
+                break
     except KeyboardInterrupt:
         print("keyboard interrupt detected. Exiting...")
     finally:

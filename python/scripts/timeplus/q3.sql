@@ -42,22 +42,21 @@ ENGINE = ExternalStream
 SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-bid';
 
 CREATE EXTERNAL STREAM target(
-    bidder int64,
-    bid_count int64,
-    ws datetime64,
-    we datetime64) 
-    SETTINGS type='kafka', 
-             brokers='kafka:9092', 
-             topic='NEXMARK_Q13', 
+    name string,
+    city string,
+    state string,
+    id int64)
+    SETTINGS type='kafka',
+             brokers='kafka:9092',
+             topic='NEXMARK_Q3',
              data_format='JSONEachRow',
              one_message_per_row=true;
 
---  side input
 CREATE MATERIALIZED VIEW mv INTO target AS 
-  SELECT
-    B.auction, B.bidder, B.price, B.dateTime, S.value
-  FROM
-    bid AS B
-  INNER JOIN side_input AS S ON B.auction = S.key
-  SETTINGS
-    seek_to = 'earliest';
+    SELECT
+        P.name, P.city, P.state, A.id
+    FROM
+        auction AS A INNER JOIN person AS P on A.seller = P.id
+    WHERE
+        A.category = 14 and (P.state = 'or' OR P.state = 'wy' OR P.state = 'ca')
+    SETTINGS seek_to = 'earliest';
