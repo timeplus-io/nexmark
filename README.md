@@ -55,7 +55,7 @@ pip install -r requirements.txt
 Run a basic benchmark test:
 
 ```bash
-python nexmark.py --cases q1,q2,q3 --platforms flink,timeplus --data-size 1000000 --event-rate 10000
+python nexmark.py --cases q1,q2,q3 --platforms flink,timeplus --data-size 1000000
 ```
 
 ## Usage

@@ -10,10 +10,9 @@ import logging
 import signal
 import sys
 from dataclasses import dataclass, asdict
-from typing import List, Dict, Tuple, Optional, Any
+from typing import List, Dict, Tuple, Optional
 from datetime import datetime
 from kafka import KafkaConsumer
-from contextlib import contextmanager
 
 # Configure logging
 logging.basicConfig(
@@ -1096,13 +1095,14 @@ def main(cases, platforms, data_size, event_rate, config_file, cpu_cores, memory
         results = benchmark.run_tests(case_list, platform_list, data_size, event_rate)
         
         # Print summary
-        print("\n" + "="*50)
+        print("\n" + "="*60)
         print("TEST RESULTS SUMMARY")
-        print("="*50)
+        print("="*60)
+        print(f"{'Case':<10} {'Platform':<10} {'Time':>9} {'Output_Size':>11} {'Status'}")
+        print("-" * 50)
         for result in results:
             status = "PASSED" if result.error is None else "FAILED"
-            print(f"{result.case:<10} {result.platform:<10} {result.execution_time:>8.2f}s {result.output_size:>8} {status}")
-        
+            print(f"{result.case:<10} {result.platform:<10} {result.execution_time:>8.2f}s {result.output_size:>11} {status}")    
         if any(result.error for result in results):
             sys.exit(1)
             
