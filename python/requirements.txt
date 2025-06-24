@@ -2,4 +2,4 @@ docker==7.0.0
 kafka-python==2.0.2
 requests==2.31.0
 click==8.1.7
-timeplus==1.4.1
+timeplustimeplus-connect==0.8.17
