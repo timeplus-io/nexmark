@@ -1,0 +1,330 @@
+[
+  {
+    "id": "50294214-c961-46cf-abcc-8cbb9c0d0f5e",
+    "title": "Response Time (Second)",
+    "description": "",
+    "position": {
+      "h": 4,
+      "nextX": 6,
+      "nextY": 5,
+      "w": 6,
+      "x": 0,
+      "y": 1
+    },
+    "viz_type": "chart",
+    "viz_content": "SELECT\n  platform, execution_time\nFROM\n  table(nexmark.nexmark_benchmark_result_report)\nWHERE\n  report_time = '{{report_time}}' and case = '{{case}}'",
+    "viz_config": {
+      "chartType": "column",
+      "config": {
+        "color": "platform",
+        "colors": [
+          "#4E5ADF",
+          "#8934D9",
+          "#1480E4",
+          "#084B8A",
+          "#257966",
+          "#B275FF",
+          "#244E47",
+          "#077D95",
+          "#6626A3",
+          "#0B66BC"
+        ],
+        "dataLabel": true,
+        "fractionDigits": 2,
+        "gridlines": true,
+        "groupType": "stack",
+        "legend": true,
+        "unit": {
+          "position": "left",
+          "value": ""
+        },
+        "updateKey": "",
+        "updateMode": "all",
+        "xAxis": "platform",
+        "xFormat": "HH:mm",
+        "xTickLabel": {
+          "maxChar": 10
+        },
+        "xTitle": "",
+        "yAxis": "execution_time",
+        "yTickLabel": {
+          "maxChar": 25
+        },
+        "yTitle": ""
+      }
+    }
+  },
+  {
+    "id": "ecf26a8a-f3ed-491f-9ce3-49c8e6593e3b",
+    "title": "new panel",
+    "description": "",
+    "position": {
+      "h": 1,
+      "nextX": 6,
+      "nextY": 1,
+      "w": 3,
+      "x": 3,
+      "y": 0
+    },
+    "viz_type": "control",
+    "viz_content": "SELECT DISTINCT   report_time FROM   table(nexmark.nexmark_benchmark_result_report)",
+    "viz_config": {
+      "chartType": "selector",
+      "defaultValue": "",
+      "inlineValues": "",
+      "label": "Report Time",
+      "target": "report_time"
+    }
+  },
+  {
+    "id": "720a4616-0113-420b-b60e-063c410480e0",
+    "title": "new panel",
+    "description": "",
+    "position": {
+      "h": 1,
+      "nextX": 9,
+      "nextY": 1,
+      "w": 3,
+      "x": 6,
+      "y": 0
+    },
+    "viz_type": "control",
+    "viz_content": "SELECT DISTINCT   case FROM   table(nexmark.nexmark_benchmark_result_report) order by case",
+    "viz_config": {
+      "chartType": "selector",
+      "defaultValue": "q0",
+      "inlineValues": "",
+      "label": "Case",
+      "labelWidth": 40,
+      "target": "case"
+    }
+  },
+  {
+    "id": "5bdbc238-a297-4a1f-b753-b598957a4391",
+    "title": "Memory Consumption (GB)",
+    "description": "",
+    "position": {
+      "x": 0,
+      "y": 5,
+      "w": 6,
+      "h": 4,
+      "nextX": 6,
+      "nextY": 9
+    },
+    "viz_type": "chart",
+    "viz_content": "select \n    to_time(raw:read) as time, \n    (raw:memory_stats:usage::int) / (1024 * 1024 * 1024) as memory_usage_gb, \n    raw:container_name as container,\n    * \nfrom\n    table(nexmark.nexmark_benchmark_stats_report)\nwhere\n    raw:case like '%{{case}}%' and report_time = '{{report_time}}'",
+    "viz_config": {
+      "chartType": "line",
+      "config": {
+        "color": "container",
+        "colors": [
+          "#ED64A6",
+          "#F0BE3E",
+          "#DA4B36",
+          "#9A1563",
+          "#FF4A71",
+          "#D12D50",
+          "#8934D9",
+          "#D53F8C",
+          "#F7775A",
+          "#8934D9"
+        ],
+        "dataLabel": true,
+        "fractionDigits": 2,
+        "gridlines": true,
+        "legend": true,
+        "lineStyle": "curve",
+        "points": true,
+        "showAll": false,
+        "unit": {
+          "position": "left",
+          "value": ""
+        },
+        "xAxis": "time",
+        "xFormat": "",
+        "xRange": "Infinity",
+        "xTitle": "",
+        "yAxis": "memory_usage_gb",
+        "yRange": {
+          "max": null,
+          "min": null
+        },
+        "yTickLabel": {
+          "maxChar": 25
+        },
+        "yTitle": ""
+      }
+    }
+  },
+  {
+    "id": "1c054d0d-a0b7-41bc-8929-cc5fde54739e",
+    "title": "CPU utilization",
+    "description": "",
+    "position": {
+      "x": 6,
+      "y": 2,
+      "w": 6,
+      "h": 4,
+      "nextX": 12,
+      "nextY": 6
+    },
+    "viz_type": "chart",
+    "viz_content": "with cpu_usage as (\nselect \n    to_time(raw:read) as time, \n    raw:cpu_stats:cpu_usage:total_usage::int64 as container_cpu_usage, \n    raw:cpu_stats:system_cpu_usage::int64 as system_cpu_usage,\n    raw:precpu_stats:cpu_usage:total_usage::int64 as prev_container_cpu_usage, \n    raw:precpu_stats:system_cpu_usage::int64 as prev_system_cpu_usage,\n    raw:cpu_stats:online_cpus::int as cpu_number,\n    raw:container_name as container\nfrom\n    nexmark.nexmark_benchmark_stats_report\nwhere\n    raw:case like '%{{case}}%' and report_time = '{{report_time}}' and _tp_time > earliest_ts()\n) \nselect \n    time, container, ((container_cpu_usage-prev_container_cpu_usage) / (system_cpu_usage-prev_system_cpu_usage))*cpu_number as cpu_util\nfrom \n    cpu_usage ",
+    "viz_config": {
+      "chartType": "line",
+      "config": {
+        "color": "container",
+        "colors": [
+          "#ED64A6",
+          "#F0BE3E",
+          "#DA4B36",
+          "#9A1563",
+          "#FF4A71",
+          "#D12D50",
+          "#8934D9",
+          "#D53F8C",
+          "#F7775A",
+          "#8934D9"
+        ],
+        "dataLabel": true,
+        "fractionDigits": 2,
+        "gridlines": true,
+        "legend": true,
+        "lineStyle": "curve",
+        "points": true,
+        "showAll": false,
+        "unit": {
+          "position": "left",
+          "value": ""
+        },
+        "xAxis": "time",
+        "xFormat": "",
+        "xRange": "Infinity",
+        "xTitle": "",
+        "yAxis": "cpu_util",
+        "yRange": {
+          "max": null,
+          "min": null
+        },
+        "yTickLabel": {
+          "maxChar": 25
+        },
+        "yTitle": ""
+      }
+    }
+  },
+  {
+    "id": "ccd66ddc-9b61-484a-b0a5-d2d3e149d179",
+    "title": "Network Write In Total",
+    "description": "",
+    "position": {
+      "x": 0,
+      "y": 9,
+      "w": 6,
+      "h": 4,
+      "nextX": 6,
+      "nextY": 13
+    },
+    "viz_type": "chart",
+    "viz_content": "select \n    to_time(raw:read) as time, \n    (raw:networks:eth0:rx_bytes::int64) / (1024 * 1024) as network_read_mb, \n    (raw:networks:eth0:tx_bytes::int64) / (1024 * 1024) as network_write_mb, \n    raw:container_name as container,\n    raw\nfrom\n    nexmark.nexmark_benchmark_stats_report\nwhere\n    raw:case like '%{{case}}%' and report_time = '{{report_time}}' and _tp_time > earliest_ts()",
+    "viz_config": {
+      "chartType": "line",
+      "config": {
+        "color": "container",
+        "colors": [
+          "#ED64A6",
+          "#F0BE3E",
+          "#DA4B36",
+          "#9A1563",
+          "#FF4A71",
+          "#D12D50",
+          "#8934D9",
+          "#D53F8C",
+          "#F7775A",
+          "#8934D9"
+        ],
+        "dataLabel": true,
+        "fractionDigits": 2,
+        "gridlines": true,
+        "legend": true,
+        "lineStyle": "curve",
+        "points": true,
+        "showAll": false,
+        "unit": {
+          "position": "left",
+          "value": ""
+        },
+        "xAxis": "time",
+        "xFormat": "",
+        "xRange": "Infinity",
+        "xTitle": "",
+        "yAxis": "network_write_mb",
+        "yRange": {
+          "max": null,
+          "min": null
+        },
+        "yTickLabel": {
+          "maxChar": 25
+        },
+        "yTitle": ""
+      }
+    }
+  },
+  {
+    "id": "51e86441-0e3e-4ff1-8f52-fec0f14c56c7",
+    "title": "Network Read In Total",
+    "description": "",
+    "position": {
+      "x": 6,
+      "y": 2,
+      "w": 6,
+      "h": 4,
+      "nextX": 12,
+      "nextY": 6
+    },
+    "viz_type": "chart",
+    "viz_content": "select \n    to_time(raw:read) as time, \n    (raw:networks:eth0:rx_bytes::int64) / (1024 * 1024) as network_read_mb, \n    (raw:networks:eth0:tx_bytes::int64) / (1024 * 1024) as network_write_mb, \n    raw:container_name as container,\n    raw\nfrom\n    nexmark.nexmark_benchmark_stats_report\nwhere\n    raw:case like '%{{case}}%' and report_time = '{{report_time}}' and _tp_time > earliest_ts()",
+    "viz_config": {
+      "chartType": "line",
+      "config": {
+        "color": "container",
+        "colors": [
+          "#ED64A6",
+          "#F0BE3E",
+          "#DA4B36",
+          "#9A1563",
+          "#FF4A71",
+          "#D12D50",
+          "#8934D9",
+          "#D53F8C",
+          "#F7775A",
+          "#8934D9"
+        ],
+        "dataLabel": true,
+        "fractionDigits": 2,
+        "gridlines": true,
+        "legend": true,
+        "lineStyle": "curve",
+        "points": true,
+        "showAll": false,
+        "unit": {
+          "position": "left",
+          "value": ""
+        },
+        "xAxis": "time",
+        "xFormat": "",
+        "xRange": "Infinity",
+        "xTitle": "",
+        "yAxis": "network_read_mb",
+        "yRange": {
+          "max": null,
+          "min": null
+        },
+        "yTickLabel": {
+          "maxChar": 25
+        },
+        "yTitle": ""
+      }
+    }
+  }
+]
