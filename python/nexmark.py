@@ -561,6 +561,10 @@ class NexmarkBenchmark:
             )
         finally:
             collector.stop_collection()
+            
+            jobmanager.stop()
+            taskmanager.stop()
+            
             # Clean up case-specific topic
             try:
                 case_topic = f'nexmark_{case}'.upper()
@@ -613,6 +617,8 @@ class NexmarkBenchmark:
             )
         finally:
             collector.stop_collection()
+            
+            timeplus_container.stop()
             # Clean up case-specific topic
             try:
                 case_topic = f'nexmark_{case}'.upper()
@@ -677,6 +683,9 @@ class NexmarkBenchmark:
             )
         finally:
             collector.stop_collection()
+            
+            ksqldb_container.stop()
+            
             # Clean up case-specific topics
             try:
                 case_topic = f'nexmark_{case}'.upper()
