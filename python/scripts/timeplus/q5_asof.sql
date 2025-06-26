@@ -61,4 +61,3 @@ CREATE MATERIALIZED VIEW mv INTO target AS
         AuctionBids.endtime = MaxBids.endtime AND
         AuctionBids.num >= MaxBids.maxn;
 
-
