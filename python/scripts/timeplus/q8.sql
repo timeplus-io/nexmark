@@ -10,7 +10,7 @@ CREATE STREAM person
   extra string
 )
 ENGINE = ExternalStream
-SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-person';
+SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-person', properties='queued.min.messages=10000000;queued.max.messages.kbytes=655360';
 
 CREATE STREAM auction
 (
@@ -26,20 +26,7 @@ CREATE STREAM auction
   extra string
 )
 ENGINE = ExternalStream
-SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-auction';
-
-CREATE STREAM bid
-(
-  auction  int64,
-  bidder  int64,
-  price  int64,
-  channel  string,
-  url  string,
-  date_time  datetime64,
-  extra  string
-)
-ENGINE = ExternalStream
-SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-bid';
+SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-auction', properties='queued.min.messages=10000000;queued.max.messages.kbytes=655360';
 
 CREATE EXTERNAL STREAM target(
     id int64, 
