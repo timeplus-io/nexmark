@@ -54,10 +54,10 @@ SETTINGS type='kafka',
              data_format='JSONEachRow',
              one_message_per_row=true;
 
--- Auction TOP-10 Price
+-- Auction TOP-10 Price, there are 600'000 auctions in total
 CREATE MATERIALIZED VIEW mv INTO target AS 
   SELECT
-    auction, top_k(price, 10) as top_10
+    auction, top_k(price, 10, false, 10) as top_10 --- 10 * 10 candidates are reserved for each auction
   FROM
     bid
   GROUP BY auction
