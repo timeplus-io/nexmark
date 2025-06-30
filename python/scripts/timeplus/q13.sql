@@ -28,7 +28,7 @@ CREATE MATERIALIZED VIEW mv INTO target AS
     select * from file('side-input.csv', 'CSV', 'key int64, value string')
   )
   SELECT
-    B.auction, B.bidder, B.price, B.dateTime, S.value
+    B.auction, B.bidder, B.price, B.date_time, S.value
   FROM
     bid AS B
   INNER JOIN side_input AS S ON B.auction = S.key
