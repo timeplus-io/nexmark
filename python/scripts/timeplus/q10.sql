@@ -1,33 +1,3 @@
-CREATE STREAM person
-(
-  id int64,
-  name string,
-  emailAddress string,
-  creditCard string,
-  city string,
-  state string,
-  date_time datetime64,
-  extra string
-)
-ENGINE = ExternalStream
-SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-person';
-
-CREATE STREAM auction
-(
-  id int64,
-  itemName string,
-  description string,
-  initialBid int64,
-  reserve int64,
-  date_time datetime64,
-  expires  datetime64,
-  seller int64,
-  category int64,
-  extra string
-)
-ENGINE = ExternalStream
-SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-auction';
-
 CREATE STREAM bid
 (
   auction  int64,
@@ -39,7 +9,7 @@ CREATE STREAM bid
   extra  string
 )
 ENGINE = ExternalStream
-SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-bid';
+SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-bid', properties='queued.min.messages=10000000;queued.max.messages.kbytes=655360';
 
 CREATE EXTERNAL STREAM target(
     tptime datetime64, 
@@ -62,5 +32,5 @@ CREATE MATERIALIZED VIEW mv INTO target AS
     _tp_time as tptime, auction, bidder, price, date_time, extra, format_datetime(date_time, '%Y-%m-%d') as t1, format_datetime(date_time, '%H:%m') as t2
   FROM
     bid
-  WHERE
-    _tp_time > earliest_ts()
+  SETTINGS 
+    seek_to='earliest';
