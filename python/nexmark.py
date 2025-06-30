@@ -833,6 +833,23 @@ class NexmarkBenchmark:
         ]
         
         try:
+              # Conditionally copy side-input.csv only for case 'q13'
+            if case == "q13":
+               copy_command = [
+                "cp",
+                "/home/scripts/side-input.csv",
+                "/var/lib/timeplusd/user_files/side-input.csv"
+               ]
+               copy_exit_code, copy_output = timeplus_container.exec_run(copy_command)
+
+               if copy_exit_code != 0:
+                  logger.error(f"Failed to copy side-input.csv: {copy_output.decode().strip()}")
+                  raise NexmarkTestError(
+                    f"Failed to copy side-input.csv: Exit code {copy_exit_code}"
+                  )
+
+                  logger.info("Successfully copied side-input.csv to container.")
+
             exit_code, output = timeplus_container.exec_run(cmd)
             if exit_code != 0:
                 raise NexmarkTestError(f"Timeplus query failed with exit code {exit_code}: {output}")
