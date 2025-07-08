@@ -586,8 +586,8 @@ class NexmarkBenchmark:
             self._init_kafka_topics([case_topic])
             
             # Start Timeplus
-            timeplus_container = self._start_timeplus()
-            
+          #  timeplus_container = self._start_timeplus()
+             timeplus_container = self._get_running_container_by_name('timeplus-server4') 
             # Run query and measure time
             start_time = time.time()
             self._run_timeplus_query(case, timeplus_container)
@@ -785,6 +785,25 @@ class NexmarkBenchmark:
             logger.error(f"Flink query failed: {e}")
             raise NexmarkTestError(f"Flink query execution failed: {e}")
 
+
+   def _get_running_container_by_name(self, name: str) -> docker.models.containers.Container | None:
+        """Return the running container matching the given container name, or None if not found."""
+        client = docker.from_env()
+        try:
+            container = client.containers.get(name)
+            if container.status == 'running':
+                logger.info(f"Found running container with name '{name}'.")
+                return container
+            else:
+                logger.info(f"Container '{name}' found but not running (status: {container.status}).")
+                return None
+        except docker.errors.NotFound:
+            logger.info(f"No container found with name '{name}'.")
+            return None
+        except Exception as e:
+            logger.error(f"Error checking container by name '{name}': {e}")
+            return None
+    
     def _start_timeplus(self) -> docker.models.containers.Container:
         """Start Timeplus container"""
         logger.info("Starting Timeplus container...")
