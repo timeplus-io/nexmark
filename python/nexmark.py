@@ -329,30 +329,35 @@ class NexmarkBenchmark:
         logger.error(f"HTTP endpoint {url} failed to become available")
         return False
 
-    def initialize_infrastructure(self, data_size: int, event_rate: int) -> docker.models.containers.Container:
-        """Initialize the test infrastructure"""
-        logger.info("Initializing test infrastructure...")
-        
-        try:
-            # Create network
-            self.container_manager.create_network(self.network_name, driver="bridge")
-            
-            # Start Kafka
-            kafka_container = self._start_kafka()
-            
-            # Initialize Kafka topics
-            self._init_kafka_topics(['nexmark-auction', 'nexmark-person', 'nexmark-bid'])
-            
-            # Generate test data
-            self._generate_data(data_size, event_rate)
-            
-            logger.info("Infrastructure initialization completed")
-            return kafka_container
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize infrastructure: {e}")
-            self.container_manager.cleanup()
-            raise
+def initialize_infrastructure(self, data_size: int, event_rate: int) -> docker.models.containers.Container:
+    """Initialize the test infrastructure"""
+    logger.info("Initializing test infrastructure...")
+
+    try:
+        # Check if the network already exists
+        existing_networks = self.client.networks.list(names=[self.network_name])
+        if existing_networks:
+            logger.info(f"Network '{self.network_name}' already exists. Reusing it.")
+            network = existing_networks[0]
+        else:
+            logger.info(f"Creating network '{self.network_name}'.")
+            network = self.container_manager.create_network(self.network_name, driver="bridge")
+
+        # Start Kafka
+        kafka_container = self._start_kafka()
+
+        # Initialize Kafka topics
+        self._init_kafka_topics(['nexmark-auction', 'nexmark-person', 'nexmark-bid'])
+
+        # Generate test data
+        self._generate_data(data_size, event_rate)
+
+        logger.info("Infrastructure initialization completed")
+        return kafka_container
+
+    except Exception as e:
+        logger.error(f"Failed to initialize infrastructure: {e}")
+        raise
 
     def _start_kafka(self) -> docker.models.containers.Container:
         """Start Kafka container"""
