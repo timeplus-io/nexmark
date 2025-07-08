@@ -587,7 +587,7 @@ class NexmarkBenchmark:
             
             # Start Timeplus
           #  timeplus_container = self._start_timeplus()
-             timeplus_container = self._get_running_container_by_name('timeplus-server4') 
+             timeplus_container = self._get_running_timeplus_by_name('timeplus-server4') 
             # Run query and measure time
             start_time = time.time()
             self._run_timeplus_query(case, timeplus_container)
@@ -786,7 +786,7 @@ class NexmarkBenchmark:
             raise NexmarkTestError(f"Flink query execution failed: {e}")
 
 
-   def _get_running_container_by_name(self, name: str) -> docker.models.containers.Container | None:
+   def _get_running_timeplus_by_name(self, name: str) -> docker.models.containers.Container | None:
         """Return the running container matching the given container name, or None if not found."""
         client = docker.from_env()
         try:
