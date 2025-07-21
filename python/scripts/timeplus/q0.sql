@@ -36,13 +36,14 @@ ENGINE = ExternalStream
 SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-bid', properties='queued.min.messages=10000000;queued.max.messages.kbytes=655360';
 
 CREATE STREAM bid
-{
+(
   auction int64, 
   bidder int64, 
   price int64, 
   date_time datetime64, 
   extra string 	
-};
+);
+
 CREATE MATERIALIZED VIEW sink_mv INTO bid AS 
     select 
         raw:auction::int64 AS auction, 
@@ -52,6 +53,7 @@ CREATE MATERIALIZED VIEW sink_mv INTO bid AS
 	raw:extra AS extra 
     FROM bid_ext
     SETTINGS seek_to = 'earliest';
+
 CREATE EXTERNAL STREAM target(
     auction int64, 
     bidder int64, 
