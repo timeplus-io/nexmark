@@ -67,10 +67,10 @@ CREATE EXTERNAL STREAM target(
              one_message_per_row=true;
 CREATE MATERIALIZED VIEW mv INTO target AS 
     select 
-        raw:auction::int64 AS auction, 
-	raw:bidder::int64 AS bidder, 
-	raw:price::int64 AS price, 
-	raw:date_time:datetime64 AS date_time, 
-	raw:extra AS extra 
+        auction, 
+	bidder, 
+	price, 
+	date_time, 
+	extra 
     FROM bid
     SETTINGS seek_to = 'earliest';
