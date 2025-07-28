@@ -1,4 +1,9 @@
-
+drop stream if exists sink_mv;
+drop stream if exists mv;
+select sleep(3);
+drop stream if exists bid;
+drop stream if exists target;
+drop stream if exists bid_ext;
 CREATE STREAM bid_ext
 (
   raw string
@@ -26,7 +31,7 @@ CREATE EXTERNAL STREAM target(
              one_message_per_row=true,
 	     properties='queue.buffering.max.ms=100';
 
-CREATE MATERIALIZED VIEW mv INTO target AS 
+CREATE MATERIALIZED VIEW sink_mv INTO target AS 
     SELECT
         raw:auction::int64 AS auction,
         raw:bidder::int64 AS bidder,
