@@ -36,7 +36,14 @@ CREATE EXTERNAL STREAM target(
              topic='NEXMARK_Q10', 
              data_format='JSONEachRow',
              one_message_per_row=true;
-
+CREATE STREAM bid
+(
+  auction int64,
+  bidder int64,
+  price int64,
+  date_time datetime64,
+  extra string
+);
 -- 
 CREATE MATERIALIZED VIEW mv INTO target AS 
   SELECT
