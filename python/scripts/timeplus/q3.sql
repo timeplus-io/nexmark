@@ -1,3 +1,11 @@
+drop stream if exists sink_person_mv;
+drop stream if exists sink_auction_mv;
+drop stream if exists mv;
+select sleep(3);
+drop stream if exists bid;
+drop stream if exists target;
+drop stream if exists person_ext;
+drop stream if exists auction_ext;
 
 CREATE STREAM person_ext
 (
@@ -29,19 +37,6 @@ CREATE STREAM auction_ext
 ENGINE = ExternalStream
 SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-auction';
 
-CREATE STREAM bid_ext
-(
-  auction  int64,
-  bidder  int64,
-  price  int64,
-  channel  string,
-  url  string,
-  date_time  datetime64,
-  extra  string
-)
-ENGINE = ExternalStream
-SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-bid';
-
 CREATE EXTERNAL STREAM target(
     name string,
     city string,
@@ -52,16 +47,7 @@ CREATE EXTERNAL STREAM target(
              topic='NEXMARK_Q3',
              data_format='JSONEachRow',
              one_message_per_row=true;
-CREATE STREAM bid
-(
-  auction  int64,
-  bidder  int64,
-  price  int64,
-  channel  string,
-  url  string,
-  date_time  datetime64,
-  extra  string
-);
+
 CREATE STREAM person
 (
   id int64,
@@ -114,19 +100,6 @@ CREATE MATERIALIZED VIEW sink_auction_mv INTO auction AS
         raw:category::int64 AS category,
         raw:extra::string AS extra
     FROM auction_ext
-    SETTINGS seek_to = 'earliest';
-             data_format='JSONEachRow',
-             one_message_per_row=true;
-CREATE MATERIALIZED VIEW sink_bid_mv INTO bid AS
-    select
-        raw:auction::int64 AS auction,
-        raw:bidder::int64 AS bidder,
-        raw:price::int64 AS price,
-        raw:channel::string AS channel,
-        raw:url::string AS url,
-        raw:date_time:datetime64 AS date_time,
-        raw:extra AS extra
-    FROM bid_ext
     SETTINGS seek_to = 'earliest';
              data_format='JSONEachRow',
              one_message_per_row=true;
