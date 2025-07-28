@@ -4,7 +4,7 @@ select sleep(3);
 drop stream if exists bid;
 drop stream if exists target;
 drop stream if exists bid_ext;
-CREATE STREAM bid
+CREATE STREAM bid_ext
 (
   auction  int64,
   bidder  int64,
