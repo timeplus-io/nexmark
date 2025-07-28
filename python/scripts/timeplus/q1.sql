@@ -30,13 +30,22 @@ CREATE EXTERNAL STREAM target(
              data_format='JSONEachRow',
              one_message_per_row=true,
 	     properties='queue.buffering.max.ms=100';
-
-CREATE MATERIALIZED VIEW sink_mv INTO target AS 
-    SELECT
+select sleep(3);
+CREATE MATERIALIZED VIEW sink_mv INTO bid AS
+    select
         raw:auction::int64 AS auction,
         raw:bidder::int64 AS bidder,
-        raw:price::int64 * 0.908 AS price, -- convert dollar to euro
+        raw:price::int64 AS price,
         raw:date_time:datetime64 AS date_time,
         raw:extra AS extra
+    FROM bid_ext
+    SETTINGS seek_to = 'earliest';
+CREATE MATERIALIZED VIEW mv INTO target AS 
+    SELECT
+        auction,
+        bidder,
+        price * 0.908 AS price, -- convert dollar to euro
+        date_time,
+        extra
     FROM bid
     SETTINGS seek_to = 'earliest';
