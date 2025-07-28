@@ -1,3 +1,9 @@
+drop stream if exists sink_mv;
+drop stream if exists mv;
+select sleep(3);
+drop stream if exists bid;
+drop stream if exists target;
+drop stream if exists bid_ext;
 CREATE STREAM bid_ext
 (
   auction  int64,
