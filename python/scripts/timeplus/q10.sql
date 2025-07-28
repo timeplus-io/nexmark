@@ -1,10 +1,21 @@
+drop stream if exists sink_mv;
+drop stream if exists mv;
+select sleep(3);
+drop stream if exists bid;
+drop stream if exists target;
+drop stream if exists bid_ext;
 CREATE STREAM bid
 (
   auction  int64,
   bidder  int64,
   price  int64,
   channel  string,
-  url  string,
+  url  string,drop stream if exists sink_mv;
+drop stream if exists mv;
+select sleep(3);
+drop stream if exists bid;
+drop stream if exists target;
+drop stream if exists bid_ext;
   date_time  datetime64,
   extra  string
 )
