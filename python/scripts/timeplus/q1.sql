@@ -1,10 +1,18 @@
-CREATE STREAM bid
+
+CREATE STREAM bid_ext
 (
   raw string
 )
 ENGINE = ExternalStream
 SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-bid', properties='queued.min.messages=10000000;queued.max.messages.kbytes=655360';
-
+CREATE STREAM bid
+(
+  auction int64,
+  bidder int64,
+  price int64,
+  date_time datetime64,
+  extra string
+);
 CREATE EXTERNAL STREAM target(
     auction  int64,
     bidder  int64,
