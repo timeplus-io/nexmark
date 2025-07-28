@@ -10,12 +10,7 @@ CREATE STREAM bid
   bidder  int64,
   price  int64,
   channel  string,
-  url  string,drop stream if exists sink_mv;
-drop stream if exists mv;
-select sleep(3);
-drop stream if exists bid;
-drop stream if exists target;
-drop stream if exists bid_ext;
+  url  string,
   date_time  datetime64,
   extra  string
 )
@@ -33,9 +28,7 @@ CREATE EXTERNAL STREAM target(
     t2 string) 
     SETTINGS type='kafka', 
              brokers='kafka:9092', 
-             topic='NEXMARK_Q10', 
-             data_format='JSONEachRow',
-             one_message_per_row=true;
+             topic='NEXMARK_Q10', select sleep(3);
 CREATE STREAM bid
 (
   auction int64,
@@ -44,6 +37,18 @@ CREATE STREAM bid
   date_time datetime64,
   extra string
 );
+select sleep(3);
+CREATE MATERIALIZED VIEW sink_mv INTO bid AS
+    select
+        raw:auction::int64 AS auction,
+        raw:bidder::int64 AS bidder,
+        raw:price::int64 AS price,
+        raw:date_time:datetime64 AS date_time,
+        raw:extra AS extra
+    FROM bid_ext
+    SETTINGS seek_to = 'earliest';
+             data_format='JSONEachRow',
+             one_message_per_row=true;
 -- 
 CREATE MATERIALIZED VIEW mv INTO target AS 
   SELECT
