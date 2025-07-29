@@ -12,29 +12,14 @@ select sleep(3);
 
 CREATE STREAM auction_ext
 (
-  id int64,
-  itemName string,
-  description string,
-  initialBid int64,
-  reserve int64,
-  date_time datetime64,
-  expires  datetime64,
-  seller int64,
-  category int64,
-  extra string
+  raw  string
 )
 ENGINE = ExternalStream
 SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-auction', properties='queued.min.messages=10000000;queued.max.messages.kbytes=655360';
 
 CREATE STREAM bid_ext
 (
-  auction  int64,
-  bidder  int64,
-  price  int64,
-  channel  string,
-  url  string,
-  date_time  datetime64,
-  extra  string
+  raw  string
 )
 ENGINE = ExternalStream
 SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-bid', properties='queued.min.messages=10000000;queued.max.messages.kbytes=655360';
