@@ -6,7 +6,7 @@ drop stream if exists bid;
 drop stream if exists target;
 drop stream if exists bid_ext;
 drop stream if exists auction_ext;
-
+select sleep(3);
 CREATE STREAM auction_ext
 (
   id int64,
@@ -83,8 +83,7 @@ CREATE MATERIALIZED VIEW sink_auction_mv INTO auction AS
         raw:extra::string AS extra
     FROM auction_ext
     SETTINGS seek_to = 'earliest';
-             data_format='JSONEachRow',
-             one_message_per_row=true;
+
 CREATE MATERIALIZED VIEW sink_bid_mv INTO bid AS
     select
         raw:auction::int64 AS auction,
@@ -96,8 +95,6 @@ CREATE MATERIALIZED VIEW sink_bid_mv INTO bid AS
         raw:extra AS extra
     FROM bid_ext
     SETTINGS seek_to = 'earliest';
-             data_format='JSONEachRow',
-             one_message_per_row=true;
 
 -- Winning Bids
 CREATE MATERIALIZED VIEW mv INTO target AS 
