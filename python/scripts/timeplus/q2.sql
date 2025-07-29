@@ -4,7 +4,7 @@ select sleep(3);
 drop stream if exists bid;
 drop stream if exists target;
 drop stream if exists bid_ext;
-
+select sleep(3);
 CREATE STREAM bid_ext
 (
   raw string
@@ -42,8 +42,6 @@ CREATE MATERIALIZED VIEW sink_mv INTO bid AS
         raw:extra AS extra
     FROM bid_ext
     SETTINGS seek_to = 'earliest';
-             data_format='JSONEachRow',
-             one_message_per_row=true;
 
 CREATE MATERIALIZED VIEW mv INTO target AS 
     SELECT 
