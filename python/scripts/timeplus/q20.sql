@@ -13,7 +13,7 @@ drop stream if exists person_ext;
 drop stream if exists auction_ext;
 select sleep(3);
 
-CREATE STREAM auction_ext
+CREATE STREAM auction
 (
   id int64,
   itemName string,
