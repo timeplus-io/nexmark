@@ -6,6 +6,7 @@ drop stream if exists auction;
 drop stream if exists target;
 drop stream if exists bid_ext;
 drop stream if exists auction_ext;
+select sleep(3);
 
 CREATE STREAM auction_ext
 (
