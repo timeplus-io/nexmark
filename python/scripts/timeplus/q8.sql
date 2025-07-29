@@ -5,6 +5,7 @@ select sleep(3);
 drop stream if exists target;
 drop stream if exists person_ext;
 drop stream if exists auction_ext;
+select sleep(3);
 
 CREATE STREAM person_ext
 (
@@ -82,8 +83,7 @@ CREATE MATERIALIZED VIEW sink_person_mv INTO person AS
         raw:extra::string AS extra
     FROM person_ext
     SETTINGS seek_to = 'earliest';
-             data_format='JSONEachRow',
-             one_message_per_row=true;
+
 CREATE MATERIALIZED VIEW sink_auction_mv INTO auction AS
     select
         raw:id::int64 AS id,
@@ -98,8 +98,6 @@ CREATE MATERIALIZED VIEW sink_auction_mv INTO auction AS
         raw:extra::string AS extra
     FROM auction_ext
     SETTINGS seek_to = 'earliest';
-             data_format='JSONEachRow',
-             one_message_per_row=true;
 
 -- Monitor New Users
 CREATE MATERIALIZED VIEW mv INTO target AS 
