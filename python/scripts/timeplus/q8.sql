@@ -1,8 +1,14 @@
 drop stream if exists sink_person_mv;
 drop stream if exists sink_auction_mv;
+drop stream if exists sink_bid_mv;
+drop stream if exists sink_mv;
 drop stream if exists mv;
 select sleep(3);
+drop stream if exists bid;
+drop stream if exists person;
+drop stream if exists auction;
 drop stream if exists target;
+drop stream if exists bid_ext;
 drop stream if exists person_ext;
 drop stream if exists auction_ext;
 select sleep(3);
