@@ -15,30 +15,14 @@ select sleep(3);
 
 CREATE STREAM person_ext
 (
-  id int64,
-  name string,
-  emailAddress string,
-  creditCard string,
-  city string,
-  state string,
-  date_time datetime64,
-  extra string
+   raw string
 )
 ENGINE = ExternalStream
 SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-person';
 
 CREATE STREAM auction_ext
 (
-  id int64,
-  itemName string,
-  description string,
-  initialBid int64,
-  reserve int64,
-  date_time datetime64,
-  expires  datetime64,
-  seller int64,
-  category int64,
-  extra string
+  raw string
 )
 ENGINE = ExternalStream
 SETTINGS type = 'kafka', brokers = 'kafka:9092', topic = 'nexmark-auction';
