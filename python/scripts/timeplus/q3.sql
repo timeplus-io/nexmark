@@ -85,8 +85,7 @@ CREATE MATERIALIZED VIEW sink_person_mv INTO person AS
         raw:extra::string AS extra
     FROM person_ext
     SETTINGS seek_to = 'earliest';
-             data_format='JSONEachRow',
-             one_message_per_row=true;
+
 CREATE MATERIALIZED VIEW sink_auction_mv INTO auction AS
     select
         raw:id::int64 AS id,
@@ -101,8 +100,6 @@ CREATE MATERIALIZED VIEW sink_auction_mv INTO auction AS
         raw:extra::string AS extra
     FROM auction_ext
     SETTINGS seek_to = 'earliest';
-             data_format='JSONEachRow',
-             one_message_per_row=true;
 
 CREATE MATERIALIZED VIEW mv INTO target AS 
     SELECT
